@@ -29,16 +29,16 @@ def get_pages(search_q: str) -> str:
         href = (link.get('href'))
         print(href)
         try:
-            if 'searchin=&page=' in href:
-                page = int(str(href).replace(f'search?q={search_q}&pagecount=&pubyear=&searchin=&page=', ''))
-                if page > max_page:
-                    max_page = page
-            elif f'/search?q={search_q}&page=' in href:
-                page = int(str(href).replace(f'/search?q={search_q}&page=', ''))
-                if page > max_page:
-                    max_page = page
+            if '&page=' in href:
+                idx = str(href).rfind('=')
+                page = str(href)[idx+1:]
+                print(f'{get_dt()} [get_pages] Page: {page}')
+                if page.isdigit():
+                    page = int(page)
+                    if page > max_page:
+                        max_page = page
         except Exception as e:
-            print(f'{get_dt()} {e}')
+            print(f'{get_dt()} [get_pages] {e}')
             max_page = 1
     return str(max_page)
 
