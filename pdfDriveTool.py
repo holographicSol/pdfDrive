@@ -6,16 +6,10 @@ import socket
 import requests
 from bs4 import BeautifulSoup
 import datetime
+from fake_useragent import UserAgent
 
 socket.setdefaulttimeout(10)
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/'
-                  '73.0.3683.103 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/'
-              'signed-exchange;v=b3',
-    'Accept-Encoding': 'text/plain',
-    'Accept-Language': 'en-US,en;q=0.9'
-    }
+ua = UserAgent()
 
 
 def get_dt():
@@ -43,31 +37,43 @@ def get_pages(search_q: str):
 def get_link(url):
     book_urls = []
     try:
+        headers = {'User-Agent': str(ua.random)}
+
         rHead = requests.get(url, headers=headers, timeout=5)
         data = rHead.text
         soup = BeautifulSoup(data, "html.parser")
         for link in soup.find_all('a'):
             href = (link.get('href'))
             if str(href).endswith('.html'):
-                book_link = 'https://www.pdfdrive.com/' + str(href)
-                if book_link not in book_urls:
-                    book_urls.append(book_link)
+                if 'auth/login' not in str(href):
+                    if 'home/setLocal' not in str(href):
+                        book_link = 'https://www.pdfdrive.com/' + str(href)
+                        if book_link not in book_urls:
+                            book_urls.append(book_link)
     except Exception as e:
         print(f'{get_dt()} {e}')
         get_link(url)
     return book_urls
 
 
-def get_page_links(search_q: str, max_page: str):
+def get_all_page_links(search_q: str, max_page: str):
     book_urls = []
     i_page = 1
     for i in range(i_page, int(max_page)):
         url = 'https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(i_page)
         print(f'{get_dt()} Scanning page: {url}')
         book_urls.append(get_link(url))
-        time.sleep(1)
+        time.sleep(3)
         i_page += 1
     return book_urls
+
+
+def get_page_links(search_q: str, page: str):
+
+    url = 'https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page)
+    print(f'{get_dt()} Scanning page: {url}')
+
+    return get_link(url)
 
 
 def enumerate_download_link(url):

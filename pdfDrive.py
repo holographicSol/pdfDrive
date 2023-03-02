@@ -1,6 +1,8 @@
 import datetime
 import os
 import sys
+import time
+
 import handler_chunk
 import pdfDriveTool
 import socket
@@ -28,7 +30,7 @@ def download(url, fname):
     _data = bytes()
 
     try:
-        http = urllib3.PoolManager(retries=3)
+        http = urllib3.PoolManager(retries=5)
         r = http.request('GET', url, preload_content=False, headers=headers)
         while True:
             data = r.read(1024)
@@ -52,6 +54,7 @@ def download(url, fname):
         print(f'{get_dt()} {e}')
     if _download_finished is False:
         print(f'{get_dt()} Retrying:', url)
+        time.sleep(5)
         download(url, fname)
 
 
@@ -70,8 +73,11 @@ def downloader(book_urls, _search_q):
         if not os.path.exists(fname):
             print(f'{get_dt()} Enumerating: {book_url}')
             url = pdfDriveTool.enumerate_download_link(url=book_url)
-            print(f'{get_dt()} Enumeration result: {url}')
-            download(url, fname)
+            if url:
+                print(f'{get_dt()} Enumeration result: {url}')
+                download(url, fname)
+            else:
+                print(f'{get_dt()} URL: Unpopulated')
 
         else:
             print(f'{get_dt()} Skipping: {book_url}')
@@ -94,8 +100,10 @@ _url = 'https://www.pdfdrive.com/search?q='
 _max_page = pdfDriveTool.get_pages(search_q=_search_q)
 print(f'{get_dt()} Pages: {_max_page}')
 print(f'{get_dt()} Getting book links: (this may take a moment)')
-book_urls = pdfDriveTool.get_page_links(search_q=_search_q, max_page=_max_page)
-book_urls = handler_chunk.un_chunk_data(book_urls, depth=1)
+# book_urls = pdfDriveTool.get_all_page_links(search_q=_search_q, max_page=_max_page)
+book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page='6')
+# book_urls = handler_chunk.un_chunk_data(book_urls, depth=1)
+print(f'{get_dt()} Book URLs: {book_urls}')
 print(f'{get_dt()} Books: {len(book_urls)}')
 print(f'{get_dt()} Starting downloads..')
 downloader(book_urls, _search_q=_search_q)
