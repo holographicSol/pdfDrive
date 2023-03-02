@@ -23,14 +23,18 @@ def get_pages(search_q: str):
     soup = BeautifulSoup(data, "html.parser")
     for link in soup.find_all('a'):
         href = (link.get('href'))
-        if 'searchin=&page=' in href:
-            page = int(str(href).replace(f'search?q={search_q}&pagecount=&pubyear=&searchin=&page=', ''))
-            if page > max_page:
-                max_page = page
-        elif f'/search?q={search_q}&page=' in href:
-            page = int(str(href).replace(f'/search?q={search_q}&page=', ''))
-            if page > max_page:
-                max_page = page
+        print(href)
+        try:
+            if 'searchin=&page=' in href:
+                page = int(str(href).replace(f'search?q={search_q}&pagecount=&pubyear=&searchin=&page=', ''))
+                if page > max_page:
+                    max_page = page
+            elif f'/search?q={search_q}&page=' in href:
+                page = int(str(href).replace(f'/search?q={search_q}&page=', ''))
+                if page > max_page:
+                    max_page = page
+        except:
+            max_page = 1
     return str(max_page)
 
 

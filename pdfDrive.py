@@ -85,10 +85,11 @@ def downloader(book_urls, _search_q):
         i_progress += 1
 
 
+""" Get Search query """
 print('')
+_search_q = ''
 stdin = list(sys.argv)
 idx = stdin.index('-k')+1
-_search_q = ''
 i = 0
 for x in stdin:
     if i >= int(idx):
@@ -96,15 +97,23 @@ for x in stdin:
     i += 1
 _search_q = _search_q[1:]
 print(f'{get_dt()} Search:', _search_q)
-_url = 'https://www.pdfdrive.com/search?q='
+
+""" Get Max Pages """
 _max_page = pdfDriveTool.get_pages(search_q=_search_q)
 print(f'{get_dt()} Pages: {_max_page}')
+
+""" Scan Pages for book URLSs """
 print(f'{get_dt()} Getting book links: (this may take a moment)')
-# book_urls = pdfDriveTool.get_all_page_links(search_q=_search_q, max_page=_max_page)
-book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page='6')
-# book_urls = handler_chunk.un_chunk_data(book_urls, depth=1)
-print(f'{get_dt()} Book URLs: {book_urls}')
-print(f'{get_dt()} Books: {len(book_urls)}')
-print(f'{get_dt()} Starting downloads..')
-downloader(book_urls, _search_q=_search_q)
-print('')
+
+i_page = 1
+for i in range(1, int(_max_page)):
+    book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
+    print(f'{get_dt()} Book URLs: {book_urls}')
+    print(f'{get_dt()} Books: {len(book_urls)}')
+
+    """ Download """
+    print(f'{get_dt()} Starting downloads..')
+    downloader(book_urls, _search_q=_search_q)
+    print('')
+
+    i_page += 1
