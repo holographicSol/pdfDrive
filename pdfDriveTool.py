@@ -62,11 +62,13 @@ def get_link(url: str) -> list:
         print(f'{get_dt()} [get_link] {e}')
         get_link(url=url)
 
-    if not book_urls:
+    if not len(book_urls) >= 1:
         print(f'{get_dt()} [get_link] trying to obtain book URLs')
         time.sleep(5)
         get_link(url=url)
-    return book_urls
+
+    else:
+        return book_urls
 
 
 def get_page_links(search_q: str, page: str) -> list:
