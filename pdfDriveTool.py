@@ -105,4 +105,8 @@ def enumerate_download_link(url: str) -> str:
 
 
 def make_file_name(book_url: str) -> str:
-    return book_url.replace('https://www.pdfdrive.com//', '').replace('.html', '.pdf')
+    book_url = book_url.replace('https://www.pdfdrive.com//', '')
+    idx = book_url.rfind('-')
+    book_url = book_url[:idx]
+    book_url = book_url+'.pdf'
+    return book_url

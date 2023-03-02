@@ -63,6 +63,7 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
             os.mkdir('./library/' + _search_q)
 
         fname = './library/' + _search_q + '/' + pdfDriveTool.make_file_name(book_url=book_url)
+        print(f'{get_dt()} Book: {fname}')
         if not os.path.exists(fname):
             print(f'{get_dt()} Enumerating: {book_url}')
             url = pdfDriveTool.enumerate_download_link(url=book_url)
