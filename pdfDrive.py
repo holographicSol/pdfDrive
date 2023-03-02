@@ -9,9 +9,11 @@ import pdfDriveTool
 import socket
 import urllib3
 import datetime
+from fake_useragent import UserAgent
 
-
-socket.setdefaulttimeout(10)
+master_timeout = 120
+ua = UserAgent()
+socket.setdefaulttimeout(master_timeout)
 
 
 def get_dt():
@@ -23,7 +25,8 @@ def download(url: str, fname: str):
     _data = bytes()
     try:
         http = urllib3.PoolManager(retries=5)
-        r = http.request('GET', url, preload_content=False)
+        headers = {'User-Agent': str(ua.random)}
+        r = http.request('GET', url, preload_content=False, headers=headers, timeout=master_timeout)
         while True:
             data = r.read(1024)
             if data:
@@ -36,12 +39,12 @@ def download(url: str, fname: str):
                 out.close()
                 break
     except Exception as e:
-        print(f'{get_dt()} {e}')
+        print(f'{get_dt()} [download] {e}')
     try:
         if r:
             r.release_conn()
     except Exception as e:
-        print(f'{get_dt()} {e}')
+        print(f'{get_dt()} [download.r.release] {e}')
     if _download_finished is False:
         print(f'{get_dt()} Retrying:', url)
         time.sleep(5)

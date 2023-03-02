@@ -6,8 +6,11 @@ import socket
 import requests
 from bs4 import BeautifulSoup
 import datetime
+from fake_useragent import UserAgent
 
-socket.setdefaulttimeout(10)
+master_timeout = 120
+ua = UserAgent()
+socket.setdefaulttimeout(master_timeout)
 
 
 def get_dt() -> str:
@@ -16,7 +19,8 @@ def get_dt() -> str:
 
 def get_pages(search_q: str) -> str:
     max_page = 0
-    rHead = requests.get('https://www.pdfdrive.com/search?q=' + search_q)
+    headers = {'User-Agent': str(ua.random)}
+    rHead = requests.get('https://www.pdfdrive.com/search?q=' + search_q, headers=headers, timeout=master_timeout)
     data = rHead.text
     soup = BeautifulSoup(data, "html.parser")
     for link in soup.find_all('a'):
@@ -40,7 +44,8 @@ def get_pages(search_q: str) -> str:
 def get_link(url: str) -> list:
     book_urls = []
     try:
-        rHead = requests.get(url, timeout=5)
+        headers = {'User-Agent': str(ua.random)}
+        rHead = requests.get(url, headers=headers, timeout=master_timeout)
         data = rHead.text
         soup = BeautifulSoup(data, "html.parser")
         for link in soup.find_all('a'):
@@ -52,8 +57,8 @@ def get_link(url: str) -> list:
                         if book_link not in book_urls:
                             book_urls.append(book_link)
     except Exception as e:
-        print(f'{get_dt()} {e}')
-        get_link(url)
+        print(f'{get_dt()} [get_link] {e}')
+        get_link(url=url)
     return book_urls
 
 
@@ -65,7 +70,8 @@ def get_page_links(search_q: str, page: str) -> list:
 
 def enumerate_download_link(url: str) -> str:
     try:
-        rHead = requests.get(url)
+        headers = {'User-Agent': str(ua.random)}
+        rHead = requests.get(url, headers=headers, timeout=master_timeout)
         data = rHead.text
         soup = BeautifulSoup(data, "html.parser")
         data_preview = ''
@@ -82,7 +88,7 @@ def enumerate_download_link(url: str) -> str:
             h_id = data_preview[1]
             url = f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
     except Exception as e:
-        print(f'{get_dt()} {e}')
+        print(f'{get_dt()} [enumerate_download_link] {e}')
         enumerate_download_link(url=url)
 
     return url
