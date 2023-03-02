@@ -3,6 +3,8 @@ Written by Benjamin Jack Cullen aka Holographic_Sol
 """
 
 import socket
+import time
+
 import requests
 from bs4 import BeautifulSoup
 import datetime
@@ -59,13 +61,19 @@ def get_link(url: str) -> list:
     except Exception as e:
         print(f'{get_dt()} [get_link] {e}')
         get_link(url=url)
+
+    if not book_urls:
+        print(f'{get_dt()} [get_link] trying to obtain book URLs')
+        time.sleep(5)
+        get_link(url=url)
     return book_urls
 
 
 def get_page_links(search_q: str, page: str) -> list:
     url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page))
     print(f'{get_dt()} Scanning page: {url}')
-    return get_link(url=url)
+    book_urls = get_link(url=url)
+    return book_urls
 
 
 def enumerate_download_link(url: str) -> str:
