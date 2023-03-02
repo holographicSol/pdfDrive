@@ -58,11 +58,11 @@ def download(url, fname):
         download(url, fname)
 
 
-def downloader(book_urls, _search_q):
+def downloader(book_urls, _search_q, _i_page, _max_page):
     i_progress = 1
     for book_url in book_urls:
         print('_'*50)
-        print(f'{get_dt()} Progress: {i_progress}/{len(book_urls)}')
+        print(f'{get_dt()} Progress: {i_progress}/{len(book_urls)} ({_i_page}/{_max_page})')
 
         if not os.path.exists('./library/'):
             os.mkdir('./library/')
@@ -113,7 +113,7 @@ for i in range(1, int(_max_page)):
 
     """ Download """
     print(f'{get_dt()} Starting downloads..')
-    downloader(book_urls, _search_q=_search_q)
+    downloader(book_urls, _search_q=_search_q, _i_page=i_page, _max_page=_max_page)
     print('')
 
     i_page += 1
