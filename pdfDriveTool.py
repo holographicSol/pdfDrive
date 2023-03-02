@@ -1,22 +1,20 @@
 """
 Written by Benjamin Jack Cullen aka Holographic_Sol
 """
-import time
+
 import socket
 import requests
 from bs4 import BeautifulSoup
 import datetime
-from fake_useragent import UserAgent
 
 socket.setdefaulttimeout(10)
-ua = UserAgent()
 
 
-def get_dt():
+def get_dt() -> str:
     return str(f'[{str(datetime.datetime.now())}]')
 
 
-def get_pages(search_q: str):
+def get_pages(search_q: str) -> str:
     max_page = 0
     rHead = requests.get('https://www.pdfdrive.com/search?q=' + search_q)
     data = rHead.text
@@ -33,17 +31,16 @@ def get_pages(search_q: str):
                 page = int(str(href).replace(f'/search?q={search_q}&page=', ''))
                 if page > max_page:
                     max_page = page
-        except:
+        except Exception as e:
+            print(f'{get_dt()} {e}')
             max_page = 1
     return str(max_page)
 
 
-def get_link(url):
+def get_link(url: str) -> list:
     book_urls = []
     try:
-        headers = {'User-Agent': str(ua.random)}
-
-        rHead = requests.get(url, headers=headers, timeout=5)
+        rHead = requests.get(url, timeout=5)
         data = rHead.text
         soup = BeautifulSoup(data, "html.parser")
         for link in soup.find_all('a'):
@@ -60,39 +57,23 @@ def get_link(url):
     return book_urls
 
 
-def get_all_page_links(search_q: str, max_page: str):
-    book_urls = []
-    i_page = 1
-    for i in range(i_page, int(max_page)):
-        url = 'https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(i_page)
-        print(f'{get_dt()} Scanning page: {url}')
-        book_urls.append(get_link(url))
-        time.sleep(3)
-        i_page += 1
-    return book_urls
-
-
-def get_page_links(search_q: str, page: str):
-
-    url = 'https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page)
+def get_page_links(search_q: str, page: str) -> list:
+    url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page))
     print(f'{get_dt()} Scanning page: {url}')
+    return get_link(url=url)
 
-    return get_link(url)
 
-
-def enumerate_download_link(url):
+def enumerate_download_link(url: str) -> str:
     try:
         rHead = requests.get(url)
         data = rHead.text
         soup = BeautifulSoup(data, "html.parser")
-
         data_preview = ''
         for link in soup.find_all('button'):
             data_preview = link.get('data-preview')
             if data_preview is not None:
                 data_preview = data_preview
                 break
-
         url = ''
         if data_preview:
             data_preview = data_preview.replace('/ebook/preview?id=', '').replace('&session=', ' ')
@@ -102,10 +83,10 @@ def enumerate_download_link(url):
             url = f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
     except Exception as e:
         print(f'{get_dt()} {e}')
-        enumerate_download_link(url)
+        enumerate_download_link(url=url)
 
     return url
 
 
-def make_file_name(book_url):
+def make_file_name(book_url: str) -> str:
     return book_url.replace('https://www.pdfdrive.com//', '').replace('.html', '.pdf')
