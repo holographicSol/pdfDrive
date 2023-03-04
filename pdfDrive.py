@@ -191,7 +191,7 @@ else:
             print(f'{get_dt()} [Books] {len(book_urls)}')
 
             """ Download """
-            print(f'{get_dt()} [Starting Download]')
+            print(f'{get_dt()} ' + color('[Starting Download]', 'G'))
             downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
             print('')
         else:

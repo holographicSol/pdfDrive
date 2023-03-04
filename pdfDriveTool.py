@@ -27,7 +27,7 @@ def get_pages(search_q: str) -> str:
     soup = BeautifulSoup(data, "html.parser")
     for link in soup.find_all('a'):
         href = (link.get('href'))
-        print(href)
+        # print(f'{get_dt()} [HREF] {href}')
         try:
             if '&page=' in href:
                 idx = str(href).rfind('=')
