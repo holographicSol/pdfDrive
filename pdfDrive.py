@@ -156,7 +156,6 @@ if '-h' in stdin:
 else:
     grand_library_supremo.display_grand_library()
     time.sleep(5)
-    print('')
     """ Page """
     i_page = 1
     if '-p' in stdin:
@@ -197,16 +196,20 @@ else:
                 success_downloads.append(line)
     fo.close()
 
+    allow_grand_library = False
+    allow_grand_library_1 = True
     for i in range(1, int(_max_page)):
         if i_page >= i:
             print('_' * 28)
-            print('')
+            if allow_grand_library is True:
+                grand_library_supremo.display_grand_library()
             book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
             """ Scan Pages for book URLSs """
             print(f'{get_dt()} ' + color('[Page] ', c='M') + color(f'{i_page}', c='W'))
             print(f'{get_dt()} ' + color('[Getting book links] ', c='M') + color('This may take a moment..', c='W'))
             print(f'{get_dt()} ' + color('[Book URLs] ', c='M') + str(color(str(book_urls), c='LC')))
             if book_urls is not None:
+                allow_grand_library_1 = True
                 print(f'{get_dt()} ' + color('[Books] ', c='M') + color(str(len(book_urls)), c='W'))
 
                 """ Download """
@@ -216,7 +219,11 @@ else:
             else:
                 if i_page >= 1:
                     i_page -= 1
+                    allow_grand_library = False
+                    allow_grand_library_1 = False
         else:
             print(f'{get_dt()} [Skipping Page] {i_page}')
 
         i_page += 1
+        if allow_grand_library_1 is True:
+            allow_grand_library = True

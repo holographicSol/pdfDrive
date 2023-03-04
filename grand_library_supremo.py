@@ -39,6 +39,8 @@ def display_grand_library():
     print(f'   || || {library_name} || ||')
     print('  ' + '_'*29)
     print(' ' + '_'*31)
+    # print('    in nomine intelligentiae  ')
+    # print(' ' + '_'*31)
     print('')
     print('')
 
