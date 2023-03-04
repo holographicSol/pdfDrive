@@ -128,7 +128,7 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
 
         filename = pdfDriveTool.make_file_name(book_url=book_url)
         fname = './library/' + _search_q + '/' + filename
-        print(f'{get_dt()} ' + color('[Book] ', c='M') + color(str(filename), c='LC'))
+        print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
         if not os.path.exists(fname):
             if fname not in success_downloads:
 
