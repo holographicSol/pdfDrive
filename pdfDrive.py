@@ -12,6 +12,7 @@ import datetime
 from fake_useragent import UserAgent
 import colorama
 import codecs
+import pdfdrive_help
 
 colorama.init()
 master_timeout = 120
@@ -128,63 +129,67 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
         i_progress += 1
 
 
-print('')
 stdin = list(sys.argv)
 
-""" Page """
-i_page = 1
-if '-p' in stdin:
-    idx = stdin.index('-p') + 1
-    i_page = int(stdin[idx])
+if '-h' in stdin:
+    pdfdrive_help.display_help()
 
-""" Query """
-_search_q = ''
-idx = stdin.index('-k')+1
-i = 0
-for x in stdin:
-    if i >= int(idx):
-        _search_q = _search_q + ' ' + x
-    i += 1
-_search_q = _search_q[1:]
-print(f'{get_dt()} Search:', _search_q)
-
-""" Max Pages """
-_max_page = 1
-if '-max' in stdin:
-    idx = stdin.index('-m') + 1
-    _max_page = int(stdin[idx])
 else:
-    _max_page = pdfDriveTool.get_pages(search_q=_search_q)
-print(f'{get_dt()} Pages: {_max_page}')
+    print('')
+    """ Page """
+    i_page = 1
+    if '-p' in stdin:
+        idx = stdin.index('-p') + 1
+        i_page = int(stdin[idx])
 
-""" Scan Pages for book URLSs """
-print(f'{get_dt()} Getting book links: (this may take a moment)')
+    """ Query """
+    _search_q = ''
+    idx = stdin.index('-k')+1
+    i = 0
+    for x in stdin:
+        if i >= int(idx):
+            _search_q = _search_q + ' ' + x
+        i += 1
+    _search_q = _search_q[1:]
+    print(f'{get_dt()} Search:', _search_q)
 
-with codecs.open('./books_failed.txt', 'r+', encoding='utf8') as fo:
-    for line in fo:
-        line = line.strip()
-        if line not in failed_downloads:
-            failed_downloads.append(line)
-fo.close()
-
-with codecs.open('./books_saved.txt', 'r+', encoding='utf8') as fo:
-    for line in fo:
-        line = line.strip()
-        if line not in success_downloads:
-            success_downloads.append(line)
-fo.close()
-
-for i in range(1, int(_max_page)):
-    if i_page >= i:
-        book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
-        print(f'{get_dt()} Book URLs: {book_urls}')
-        print(f'{get_dt()} Books: {len(book_urls)}')
-
-        """ Download """
-        print(f'{get_dt()} Starting downloads..')
-        downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
-        print('')
+    """ Max Pages """
+    _max_page = 1
+    if '-max' in stdin:
+        idx = stdin.index('-max') + 1
+        _max_page = int(stdin[idx])
     else:
-        print(f'{get_dt()} Skipping page: {i_page}')
+        _max_page = pdfDriveTool.get_pages(search_q=_search_q)
+    print(f'{get_dt()} Pages: {_max_page}')
 
-    i_page += 1
+    """ Scan Pages for book URLSs """
+    print(f'{get_dt()} Getting book links: (this may take a moment)')
+
+    with codecs.open('./books_failed.txt', 'r+', encoding='utf8') as fo:
+        for line in fo:
+            line = line.strip()
+            if line not in failed_downloads:
+                failed_downloads.append(line)
+    fo.close()
+
+    with codecs.open('./books_saved.txt', 'r+', encoding='utf8') as fo:
+        for line in fo:
+            line = line.strip()
+            if line not in success_downloads:
+                success_downloads.append(line)
+    fo.close()
+
+    for i in range(1, int(_max_page)):
+        if i_page >= i:
+            book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
+            print(f'{get_dt()} Book URLs: {book_urls}')
+            print(f'{get_dt()} Books: {len(book_urls)}')
+
+            """ Download """
+            print(f'{get_dt()} Starting downloads..')
+            downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
+            print('')
+        else:
+            print(f'{get_dt()} Skipping page: {i_page}')
+
+        i_page += 1
