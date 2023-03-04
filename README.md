@@ -1,11 +1,12 @@
     PDFDrive Downloader
-
-      -k      Keyword    Specify a search string.
-      -p      Page       Specify a page to start downloading from (optional).
-      -max    Max        Specify max pages to download (optional).
-      -h      Help       Displays this help message.
-
+    
+    -k      Keyword    Specify a search string.
+    -p      Page       Specify a page to start downloading from (optional). -p 1
+    -max    Max        Specify a page to end downloading (optional). -max 3     
+    -h      Help       Displays this help message.
+    
     Developed and written by Benjamin Jack Cullen.
+
 
 
 Features:
