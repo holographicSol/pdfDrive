@@ -219,6 +219,7 @@ else:
             else:
                 if i_page >= 1:
                     i_page -= 1
+                    time.sleep(10)
                     allow_grand_library = False
                     allow_grand_library_1 = False
         else:

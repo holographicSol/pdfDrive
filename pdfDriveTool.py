@@ -121,6 +121,7 @@ def enumerate_download_link(url: str) -> str:
             url = f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
     except Exception as e:
         print(f'{get_dt()} [Exception.enumerate_download_link] {e}')
+        time.sleep(10)
         enumerate_download_link(url=url)
 
     return url
