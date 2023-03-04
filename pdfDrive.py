@@ -61,7 +61,7 @@ def download(url: str, fname: str):
         headers = {'User-Agent': str(ua.random)}
         r = http.request('GET', url, preload_content=False, headers=headers, timeout=master_timeout)
         while True:
-            pyprogress.display_progress_unknown(str_progress=progress_mode, progress_list=pyprogress.arrow_a,
+            pyprogress.display_progress_unknown(str_progress=progress_mode, progress_list=pyprogress.arrow_a_13,
                                                 color='CYAN')
             data = r.read(1024)
             if data:
