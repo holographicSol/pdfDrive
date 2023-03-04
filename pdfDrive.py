@@ -56,12 +56,12 @@ def download(url: str, fname: str):
                 _download_finished = True
                 break
     except Exception as e:
-        print(f'{get_dt()} [download] {e}')
+        print(f'{get_dt()} [Exception.download] {e}')
     try:
         if r:
             r.release_conn()
     except Exception as e:
-        print(f'{get_dt()} [download.r.release] {e}')
+        print(f'{get_dt()} [Exception.download.r.release] {e}')
 
     if _download_finished is False:
         if retry_max > 0:

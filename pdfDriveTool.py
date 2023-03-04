@@ -38,7 +38,7 @@ def get_pages(search_q: str) -> str:
                     if page > max_page:
                         max_page = page
         except Exception as e:
-            print(f'{get_dt()} [get_pages] {e}')
+            print(f'{get_dt()} [Exception.get_pages] {e}')
             max_page = 1
     return str(max_page)
 
@@ -59,7 +59,7 @@ def get_link(url: str) -> list:
                         if book_link not in book_urls:
                             book_urls.append(book_link)
     except Exception as e:
-        print(f'{get_dt()} [get_link] {e}')
+        print(f'{get_dt()} [Exception.get_link] {e}')
         get_link(url=url)
 
     if len(book_urls) >= 1:
@@ -98,7 +98,7 @@ def enumerate_download_link(url: str) -> str:
             h_id = data_preview[1]
             url = f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
     except Exception as e:
-        print(f'{get_dt()} [enumerate_download_link] {e}')
+        print(f'{get_dt()} [Exception.enumerate_download_link] {e}')
         enumerate_download_link(url=url)
 
     return url
