@@ -10,10 +10,27 @@ import socket
 import urllib3
 import datetime
 from fake_useragent import UserAgent
+import colorama
+import codecs
 
+colorama.init()
 master_timeout = 120
 ua = UserAgent()
 socket.setdefaulttimeout(master_timeout)
+retry_max = 1
+success_downloads = []
+failed_downloads = []
+
+
+def color(s, c):
+    if c == 'LC':
+        return colorama.Style.BRIGHT + colorama.Fore.LIGHTCYAN_EX + str(s) + colorama.Style.RESET_ALL
+    elif c == 'G':
+        return colorama.Style.BRIGHT + colorama.Fore.GREEN + str(s) + colorama.Style.RESET_ALL
+    elif c == 'R':
+        return colorama.Style.BRIGHT + colorama.Fore.RED + str(s) + colorama.Style.RESET_ALL
+    elif c == 'Y':
+        return colorama.Style.BRIGHT + colorama.Fore.YELLOW + str(s) + colorama.Style.RESET_ALL
 
 
 def get_dt():
@@ -21,6 +38,9 @@ def get_dt():
 
 
 def download(url: str, fname: str):
+    global retry_max
+    global success_downloads
+    global failed_downloads
     _download_finished = False
     _data = bytes()
     try:
@@ -33,10 +53,6 @@ def download(url: str, fname: str):
                 _data += data
             else:
                 _download_finished = True
-                open(fname, 'w').close()
-                with open(fname, 'wb') as out:
-                    out.write(_data)
-                out.close()
                 break
     except Exception as e:
         print(f'{get_dt()} [download] {e}')
@@ -45,18 +61,47 @@ def download(url: str, fname: str):
             r.release_conn()
     except Exception as e:
         print(f'{get_dt()} [download.r.release] {e}')
+
     if _download_finished is False:
-        print(f'{get_dt()} Retrying:', url)
-        time.sleep(5)
-        download(url=url, fname=fname)
+        if retry_max > 0:
+            retry_max -= 1
+            print(f'{get_dt()} ' + color('Retrying.', c='Y'))
+            download(url=url, fname=fname)
+    else:
+        codecs.open(fname, 'w', encoding='utf8').close()
+        with open(fname, 'wb') as out:
+            out.write(_data)
+        out.close()
+
+    if os.path.exists(fname):
+        if os.path.getsize(fname) > 100:
+            print(f'{get_dt()} ' + color('Downloaded Successfully.', c='G'))
+            with codecs.open('./books_saved.txt', 'a+', encoding='utf8') as fo:
+                fo.write(fname+'\n')
+            fo.close()
+        else:
+            print(f'{get_dt()} ' + color('File less than 100 bytes.', c='Y'))
+            print(f'{get_dt()} ' + color('Download Failed.', c='R'))
+            if fname not in failed_downloads:
+                with codecs.open('./books_failed.txt', 'a+', encoding='utf8') as fo:
+                    fo.write(fname+'\n')
+                fo.close()
+            os.remove(fname)
+    else:
+        print(f'{get_dt()} ' + color('File did not save.', c='Y'))
+        print(f'{get_dt()} ' + color('Download Failed.', c='R'))
 
 
 def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
+    global retry_max
+    global success_downloads
     i_progress = 1
     for book_url in _book_urls:
+        retry_max = 3
         print('_'*50)
+        print('')
         print(f'{get_dt()} Progress: {i_progress}/{len(_book_urls)} ({_i_page}/{_max_page})')
-
+        print(f'{get_dt()} Category: {_search_q}')
         if not os.path.exists('./library/'):
             os.mkdir('./library/')
         if not os.path.exists('./library/' + _search_q):
@@ -64,7 +109,7 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
 
         fname = './library/' + _search_q + '/' + pdfDriveTool.make_file_name(book_url=book_url)
         print(f'{get_dt()} Book: {fname}')
-        if not os.path.exists(fname):
+        if not os.path.exists(fname) and fname not in success_downloads:
             print(f'{get_dt()} Enumerating: {book_url}')
             url = pdfDriveTool.enumerate_download_link(url=book_url)
             if url:
@@ -79,10 +124,17 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
         i_progress += 1
 
 
-""" Get Search query """
 print('')
-_search_q = ''
 stdin = list(sys.argv)
+
+""" Page """
+i_page = 1
+if '-p' in stdin:
+    idx = stdin.index('-p') + 1
+    i_page = int(stdin[idx])
+
+""" Query """
+_search_q = ''
 idx = stdin.index('-k')+1
 i = 0
 for x in stdin:
@@ -92,22 +144,43 @@ for x in stdin:
 _search_q = _search_q[1:]
 print(f'{get_dt()} Search:', _search_q)
 
-""" Get Max Pages """
-_max_page = pdfDriveTool.get_pages(search_q=_search_q)
+""" Max Pages """
+_max_page = 1
+if '-max' in stdin:
+    idx = stdin.index('-m') + 1
+    _max_page = int(stdin[idx])
+else:
+    _max_page = pdfDriveTool.get_pages(search_q=_search_q)
 print(f'{get_dt()} Pages: {_max_page}')
 
 """ Scan Pages for book URLSs """
 print(f'{get_dt()} Getting book links: (this may take a moment)')
 
-i_page = 1
-for i in range(1, int(_max_page)):
-    book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
-    print(f'{get_dt()} Book URLs: {book_urls}')
-    print(f'{get_dt()} Books: {len(book_urls)}')
+with codecs.open('./books_failed.txt', 'r+', encoding='utf8') as fo:
+    for line in fo:
+        line = line.strip()
+        if line not in failed_downloads:
+            failed_downloads.append(line)
+fo.close()
 
-    """ Download """
-    print(f'{get_dt()} Starting downloads..')
-    downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
-    print('')
+with codecs.open('./books_saved.txt', 'r+', encoding='utf8') as fo:
+    for line in fo:
+        line = line.strip()
+        if line not in success_downloads:
+            success_downloads.append(line)
+fo.close()
+
+for i in range(1, int(_max_page)):
+    if i_page >= i:
+        book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
+        print(f'{get_dt()} Book URLs: {book_urls}')
+        print(f'{get_dt()} Books: {len(book_urls)}')
+
+        """ Download """
+        print(f'{get_dt()} Starting downloads..')
+        downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
+        print('')
+    else:
+        print(f'{get_dt()} Skipping page: {i_page}')
 
     i_page += 1
