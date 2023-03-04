@@ -4,19 +4,41 @@ Written by Benjamin Jack Cullen aka Holographic_Sol
 
 import socket
 import time
-
 import requests
 from bs4 import BeautifulSoup
 import datetime
 from fake_useragent import UserAgent
+import colorama
 
+colorama.init()
 master_timeout = 120
 ua = UserAgent()
 socket.setdefaulttimeout(master_timeout)
 
 
+def color(s, c):
+    if c == 'W':
+        return colorama.Style.BRIGHT + colorama.Fore.WHITE + str(s) + colorama.Style.RESET_ALL
+    elif c == 'LM':
+        return colorama.Style.BRIGHT + colorama.Fore.LIGHTMAGENTA_EX + str(s) + colorama.Style.RESET_ALL
+    elif c == 'M':
+        return colorama.Style.BRIGHT + colorama.Fore.MAGENTA + str(s) + colorama.Style.RESET_ALL
+    elif c == 'LC':
+        return colorama.Style.BRIGHT + colorama.Fore.LIGHTCYAN_EX + str(s) + colorama.Style.RESET_ALL
+    elif c == 'B':
+        return colorama.Style.BRIGHT + colorama.Fore.BLUE + str(s) + colorama.Style.RESET_ALL
+    elif c == 'LG':
+        return colorama.Style.BRIGHT + colorama.Fore.LIGHTGREEN_EX + str(s) + colorama.Style.RESET_ALL
+    elif c == 'G':
+        return colorama.Style.BRIGHT + colorama.Fore.GREEN + str(s) + colorama.Style.RESET_ALL
+    elif c == 'Y':
+        return colorama.Style.BRIGHT + colorama.Fore.YELLOW + str(s) + colorama.Style.RESET_ALL
+    elif c == 'R':
+        return colorama.Style.BRIGHT + colorama.Fore.RED + str(s) + colorama.Style.RESET_ALL
+
+
 def get_dt() -> str:
-    return str(f'[{str(datetime.datetime.now())}]')
+    return color(str('[' + str(datetime.datetime.now()) + ']'), c='W')
 
 
 def get_pages(search_q: str) -> str:
@@ -27,12 +49,12 @@ def get_pages(search_q: str) -> str:
     soup = BeautifulSoup(data, "html.parser")
     for link in soup.find_all('a'):
         href = (link.get('href'))
-        # print(f'{get_dt()} [HREF] {href}')
+        # print(f'{get_dt()} [HREF] {href}')  # verbose
         try:
             if '&page=' in href:
                 idx = str(href).rfind('=')
                 page = str(href)[idx+1:]
-                print(f'{get_dt()} [get_pages] Page: {page}')
+                # print(f'{get_dt()} [get_pages] Page: {page}')  # verbose
                 if page.isdigit():
                     page = int(page)
                     if page > max_page:
@@ -73,7 +95,7 @@ def get_link(url: str) -> list:
 
 def get_page_links(search_q: str, page: str) -> list:
     url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page))
-    print(f'{get_dt()} [Scanning page] {url}')
+    print(f'{get_dt()} ' + color('[Scanning page] ', c='LC') + color(url, c='W'))
     book_urls = get_link(url=url)
     return book_urls
 

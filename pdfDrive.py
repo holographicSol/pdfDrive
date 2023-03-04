@@ -25,18 +25,28 @@ failed_downloads = []
 
 
 def color(s, c):
-    if c == 'LC':
+    if c == 'W':
+        return colorama.Style.BRIGHT + colorama.Fore.WHITE + str(s) + colorama.Style.RESET_ALL
+    elif c == 'LM':
+        return colorama.Style.BRIGHT + colorama.Fore.LIGHTMAGENTA_EX + str(s) + colorama.Style.RESET_ALL
+    elif c == 'M':
+        return colorama.Style.BRIGHT + colorama.Fore.MAGENTA + str(s) + colorama.Style.RESET_ALL
+    elif c == 'LC':
         return colorama.Style.BRIGHT + colorama.Fore.LIGHTCYAN_EX + str(s) + colorama.Style.RESET_ALL
+    elif c == 'B':
+        return colorama.Style.BRIGHT + colorama.Fore.BLUE + str(s) + colorama.Style.RESET_ALL
+    elif c == 'LG':
+        return colorama.Style.BRIGHT + colorama.Fore.LIGHTGREEN_EX + str(s) + colorama.Style.RESET_ALL
     elif c == 'G':
         return colorama.Style.BRIGHT + colorama.Fore.GREEN + str(s) + colorama.Style.RESET_ALL
-    elif c == 'R':
-        return colorama.Style.BRIGHT + colorama.Fore.RED + str(s) + colorama.Style.RESET_ALL
     elif c == 'Y':
         return colorama.Style.BRIGHT + colorama.Fore.YELLOW + str(s) + colorama.Style.RESET_ALL
+    elif c == 'R':
+        return colorama.Style.BRIGHT + colorama.Fore.RED + str(s) + colorama.Style.RESET_ALL
 
 
 def get_dt():
-    return str(f'[{str(datetime.datetime.now())}]')
+    return color(str('[' + str(datetime.datetime.now()) + ']'), c='W')
 
 
 def download(url: str, fname: str):
@@ -45,12 +55,13 @@ def download(url: str, fname: str):
     global failed_downloads
     _download_finished = False
     _data = bytes()
+    progress_mode = color('[DOWNLOADING] ', c='W')
     try:
         http = urllib3.PoolManager(retries=5)
         headers = {'User-Agent': str(ua.random)}
         r = http.request('GET', url, preload_content=False, headers=headers, timeout=master_timeout)
         while True:
-            pyprogress.display_progress_unknown(str_progress='[DOWNLOADING] ', progress_list=pyprogress.arrow_a,
+            pyprogress.display_progress_unknown(str_progress=progress_mode, progress_list=pyprogress.arrow_a,
                                                 color='CYAN')
             data = r.read(1024)
             if data:
@@ -106,30 +117,31 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
     i_progress = 1
     for book_url in _book_urls:
         retry_max = 3
-        print('_'*50)
+        print('_'*28)
         print('')
-        print(f'{get_dt()} [Progress] {i_progress}/{len(_book_urls)} ({_i_page}/{_max_page})')
-        print(f'{get_dt()} [Category] {_search_q}')
+        print(f'{get_dt()} ' + color('[Progress] ', c='LC') + color(str(f'{i_progress}/{len(_book_urls)} ({_i_page}/{_max_page})'), c='W'))
+        print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
         if not os.path.exists('./library/'):
             os.mkdir('./library/')
         if not os.path.exists('./library/' + _search_q):
             os.mkdir('./library/' + _search_q)
 
         fname = './library/' + _search_q + '/' + pdfDriveTool.make_file_name(book_url=book_url)
-        print(f'{get_dt()} [Book] {fname}')
+        print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(fname), c='W'))
         if not os.path.exists(fname):
             if fname not in success_downloads:
-                print(f'{get_dt()} [Enumerating] {book_url}')
+
+                print(f'{get_dt()} ' + color('[Enumerating] ', c='LC') + color(str(book_url), c='W'))
                 url = pdfDriveTool.enumerate_download_link(url=book_url)
                 if url:
-                    print(f'{get_dt()} [Enumeration result] {url}')
+
+                    print(f'{get_dt()} ' + color('[Enumeration result] ', c='LC') + color(str(url), c='W'))
                     download(url=url, fname=fname)
                 else:
                     print(f'{get_dt()} ' + color('[URL] Unpopulated.', c='Y'))
-            else:
-                print(f'{get_dt()} ' + color('[Skipping] (File exists in records): ', c='Y') + str(book_url))
+                print(f'{get_dt()} ' + color('[Skipping] ', c='LC') + color('File exists in records.', c='W'))
         else:
-            print(f'{get_dt()} ' + color('[Skipping] (File already exists): ', c='Y') + str(book_url))
+            print(f'{get_dt()} ' + color('[Skipping] ', c='LC') + color('File already exists in filesystem.', c='W'))
 
         i_progress += 1
 
@@ -141,6 +153,9 @@ if '-h' in stdin:
 
 else:
     print('')
+    print('_' * 28)
+    print('')
+    print(f'{get_dt()} ' + color('[PDFDrive Downloader]', c='W'))
     """ Page """
     i_page = 1
     if '-p' in stdin:
@@ -156,7 +171,7 @@ else:
             _search_q = _search_q + ' ' + x
         i += 1
     _search_q = _search_q[1:]
-    print(f'{get_dt()} [Search]', _search_q)
+    print(f'{get_dt()} ' + color('[Search] ', c='LC') + color(_search_q, c='W'))
 
     """ Max Pages """
     _max_page = 1
@@ -165,10 +180,10 @@ else:
         _max_page = int(stdin[idx])
     else:
         _max_page = pdfDriveTool.get_pages(search_q=_search_q)
-    print(f'{get_dt()} [Pages] {_max_page}')
+    print(f'{get_dt()} ' + color('[Pages] ', c='LC') + color(_max_page, c='W'))
 
     """ Scan Pages for book URLSs """
-    print(f'{get_dt()} [Getting book links] This may take a moment..')
+    print(f'{get_dt()} ' + color('[Getting book links] ', c='LC') + color('This may take a moment..', c='W'))
 
     with codecs.open('./books_failed.txt', 'r+', encoding='utf8') as fo:
         for line in fo:
@@ -186,13 +201,15 @@ else:
 
     for i in range(1, int(_max_page)):
         if i_page >= i:
+            print('_' * 28)
+            print('')
             book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
-            print(f'{get_dt()} [Book URLs] ' + str(color(str(book_urls), c='LC')))
+            print(f'{get_dt()} ' + color('[Book URLs] ', c='M') + str(color(str(book_urls), c='LC')))
             if book_urls is not None:
-                print(f'{get_dt()} [Books] {len(book_urls)}')
+                print(f'{get_dt()} ' + color('[Books] ', c='M') + color(str(len(book_urls)), c='W'))
 
                 """ Download """
-                print(f'{get_dt()} ' + color('[Starting Download]', 'G'))
+                print(f'{get_dt()} ' + color('[Starting Downloads]', 'G'))
                 downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
                 print('')
             else:
