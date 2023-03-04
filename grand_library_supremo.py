@@ -27,15 +27,18 @@ def color(s, c):
 
 supremo = color('/o\\', c='Y')
 library_name = color('[Grand Library]', c='Y')
-print('')
-print('')
-print(f'               {supremo}')
-print('      ' + '_'*21)
-print('      || ||           || ||')
-print('  ' + '_'*29)
-print(f'   || || {library_name} || ||')
-print('  ' + '_'*29)
-print(' ' + '_'*31)
-print('')
-print('')
+
+
+def display_grand_library():
+    print('')
+    print('')
+    print(f'               {supremo}')
+    print('      ' + '_'*21)
+    print('      || ||           || ||')
+    print('  ' + '_'*29)
+    print(f'   || || {library_name} || ||')
+    print('  ' + '_'*29)
+    print(' ' + '_'*31)
+    print('')
+    print('')
 

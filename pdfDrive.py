@@ -14,6 +14,7 @@ import colorama
 import codecs
 import pdfdrive_help
 import pyprogress
+import grand_library_supremo
 
 colorama.init()
 master_timeout = 120
@@ -153,11 +154,8 @@ if '-h' in stdin:
     pdfdrive_help.display_help()
 
 else:
-    print('')
-    print('_' * 28)
-    print('')
-    print(color('   [PDFDrive Downloader]', c='W'))
-    print('_' * 28)
+    grand_library_supremo.display_grand_library()
+    time.sleep(5)
     print('')
     """ Page """
     i_page = 1
