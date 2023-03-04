@@ -14,6 +14,8 @@ Downloads saved as < 100 bytes are flagged and deleted.
 
 Downloads > 100 bytes that save sucessfully may require extra handling and be otherwise unusable.
 
+Enumerates download url before ever landing on the final page containing the download link that contains the
+full download href as the download href takes time to populate.
 
 example:
 pdfDrive -k big pharma
