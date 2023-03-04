@@ -73,7 +73,7 @@ def get_link(url: str) -> list:
 
 def get_page_links(search_q: str, page: str) -> list:
     url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page))
-    print(f'{get_dt()} Scanning page: {url}')
+    print(f'{get_dt()} [Scanning page] {url}')
     book_urls = get_link(url=url)
     return book_urls
 
