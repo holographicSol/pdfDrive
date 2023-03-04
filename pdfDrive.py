@@ -87,6 +87,7 @@ def download(url: str, fname: str):
                 with codecs.open('./books_failed.txt', 'a+', encoding='utf8') as fo:
                     fo.write(fname+'\n')
                 fo.close()
+                failed_downloads.append(fname)
             os.remove(fname)
     else:
         print(f'{get_dt()} ' + color('File did not save.', c='Y'))
@@ -95,6 +96,7 @@ def download(url: str, fname: str):
             with codecs.open('./books_failed.txt', 'a+', encoding='utf8') as fo:
                 fo.write(fname + '\n')
             fo.close()
+            failed_downloads.append(fname)
 
 
 def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
