@@ -8,3 +8,5 @@ def display_help():
     print('-max    Max        Specify max pages to download (optional).')
     print('-h      Help       Displays this help message.')
     print('')
+    print('Developed and written by Benjamin Jack Cullen.')
+    print('')
