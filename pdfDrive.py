@@ -116,17 +116,20 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
 
         fname = './library/' + _search_q + '/' + pdfDriveTool.make_file_name(book_url=book_url)
         print(f'{get_dt()} Book: {fname}')
-        if not os.path.exists(fname) and fname not in success_downloads:
-            print(f'{get_dt()} Enumerating: {book_url}')
-            url = pdfDriveTool.enumerate_download_link(url=book_url)
-            if url:
-                print(f'{get_dt()} Enumeration result: {url}')
-                download(url=url, fname=fname)
+        if not os.path.exists(fname):
+            if fname not in success_downloads:
+                print(f'{get_dt()} Enumerating: {book_url}')
+                url = pdfDriveTool.enumerate_download_link(url=book_url)
+                if url:
+                    print(f'{get_dt()} Enumeration result: {url}')
+                    download(url=url, fname=fname)
+                else:
+                    print(f'{get_dt()} URL: Unpopulated')
+                    print(f'{get_dt()} ' + color('URL Unpopulated.', c='Y'))
             else:
-                print(f'{get_dt()} URL: Unpopulated')
-
+                print(f'{get_dt()} ' + color('Skipping (File exists in records):', c='Y') + str(book_url))
         else:
-            print(f'{get_dt()} Skipping: {book_url}')
+            print(f'{get_dt()} ' + color('Skipping (File already exists):', c='Y') + str(book_url))
 
         i_progress += 1
 
