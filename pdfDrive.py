@@ -188,12 +188,16 @@ else:
         if i_page >= i:
             book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
             print(f'{get_dt()} [Book URLs] ' + str(color(str(book_urls), c='LC')))
-            print(f'{get_dt()} [Books] {len(book_urls)}')
+            if book_urls is not None:
+                print(f'{get_dt()} [Books] {len(book_urls)}')
 
-            """ Download """
-            print(f'{get_dt()} ' + color('[Starting Download]', 'G'))
-            downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
-            print('')
+                """ Download """
+                print(f'{get_dt()} ' + color('[Starting Download]', 'G'))
+                downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
+                print('')
+            else:
+                if i_page >= 1:
+                    i_page -= 1
         else:
             print(f'{get_dt()} [Skipping Page] {i_page}')
 
