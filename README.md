@@ -12,7 +12,8 @@ Downloader still requires extra handling for many things. serves the purpose for
 
 Downloads saved as < 100 bytes are flagged and deleted.
 
-Downloads > 100 bytes that save sucessfully may require extrahandling and be otherwise unusable.
+Downloads > 100 bytes that save sucessfully may require extra handling and be otherwise unusable.
+
 
 example:
 pdfDrive -k big pharma
