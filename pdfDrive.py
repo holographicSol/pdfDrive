@@ -90,6 +90,10 @@ def download(url: str, fname: str):
     else:
         print(f'{get_dt()} ' + color('File did not save.', c='Y'))
         print(f'{get_dt()} ' + color('Download Failed.', c='R'))
+        if fname not in failed_downloads:
+            with codecs.open('./books_failed.txt', 'a+', encoding='utf8') as fo:
+                fo.write(fname + '\n')
+            fo.close()
 
 
 def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
