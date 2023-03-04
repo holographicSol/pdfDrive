@@ -13,6 +13,7 @@ from fake_useragent import UserAgent
 import colorama
 import codecs
 import pdfdrive_help
+import pyprogress
 
 colorama.init()
 master_timeout = 120
@@ -49,6 +50,8 @@ def download(url: str, fname: str):
         headers = {'User-Agent': str(ua.random)}
         r = http.request('GET', url, preload_content=False, headers=headers, timeout=master_timeout)
         while True:
+            pyprogress.display_progress_unknown(str_progress='[DOWNLOADING] ', progress_list=pyprogress.arrow_a,
+                                                color='CYAN')
             data = r.read(1024)
             if data:
                 _data += data
@@ -120,7 +123,6 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
                 url = pdfDriveTool.enumerate_download_link(url=book_url)
                 if url:
                     print(f'{get_dt()} [Enumeration result] {url}')
-                    print(f'{get_dt()} [Downloading]')
                     download(url=url, fname=fname)
                 else:
                     print(f'{get_dt()} ' + color('[URL] Unpopulated.', c='Y'))
