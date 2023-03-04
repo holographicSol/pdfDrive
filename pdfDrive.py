@@ -187,7 +187,7 @@ else:
     for i in range(1, int(_max_page)):
         if i_page >= i:
             book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
-            print(f'{get_dt()} [Book URLs] {book_urls}')
+            print(f'{get_dt()} [Book URLs] ' + str(color(book_urls, c='LC')))
             print(f'{get_dt()} [Books] {len(book_urls)}')
 
             """ Download """
