@@ -126,8 +126,9 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
         if not os.path.exists('./library/' + _search_q):
             os.mkdir('./library/' + _search_q)
 
-        fname = './library/' + _search_q + '/' + pdfDriveTool.make_file_name(book_url=book_url)
-        print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(fname), c='W'))
+        filename = pdfDriveTool.make_file_name(book_url=book_url)
+        fname = './library/' + _search_q + '/' + filename
+        print(f'{get_dt()} ' + color('[Book] ', c='M') + color(str(filename), c='LC'))
         if not os.path.exists(fname):
             if fname not in success_downloads:
 
@@ -139,9 +140,9 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
                     download(url=url, fname=fname)
                 else:
                     print(f'{get_dt()} ' + color('[URL] Unpopulated.', c='Y'))
-                    print(f'{get_dt()} ' + color('[Skipping] ', c='LC') + color('File exists in records.', c='W'))
+                    print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in records.', c='W'))
         else:
-            print(f'{get_dt()} ' + color('[Skipping] ', c='LC') + color('File already exists in filesystem.', c='W'))
+            print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File already exists in filesystem.', c='W'))
 
         i_progress += 1
 
@@ -155,7 +156,9 @@ else:
     print('')
     print('_' * 28)
     print('')
-    print(f'{get_dt()} ' + color('[PDFDrive Downloader]', c='W'))
+    print(color('   [PDFDrive Downloader]', c='W'))
+    print('_' * 28)
+    print('')
     """ Page """
     i_page = 1
     if '-p' in stdin:
@@ -182,9 +185,6 @@ else:
         _max_page = pdfDriveTool.get_pages(search_q=_search_q)
     print(f'{get_dt()} ' + color('[Pages] ', c='LC') + color(_max_page, c='W'))
 
-    """ Scan Pages for book URLSs """
-    print(f'{get_dt()} ' + color('[Getting book links] ', c='LC') + color('This may take a moment..', c='W'))
-
     with codecs.open('./books_failed.txt', 'r+', encoding='utf8') as fo:
         for line in fo:
             line = line.strip()
@@ -204,6 +204,9 @@ else:
             print('_' * 28)
             print('')
             book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
+            """ Scan Pages for book URLSs """
+            print(f'{get_dt()} ' + color('[Page] ', c='M') + color(f'{i_page}', c='W'))
+            print(f'{get_dt()} ' + color('[Getting book links] ', c='M') + color('This may take a moment..', c='W'))
             print(f'{get_dt()} ' + color('[Book URLs] ', c='M') + str(color(str(book_urls), c='LC')))
             if book_urls is not None:
                 print(f'{get_dt()} ' + color('[Books] ', c='M') + color(str(len(book_urls)), c='W'))
