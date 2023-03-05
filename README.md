@@ -31,6 +31,11 @@ Notes:
     full download href as the download href takes time to populate.
 
 
+Distribution version:
+
+    https://drive.google.com/drive/folders/1Vs96-lEA9_DKl_GdyFbKI9yN6Bhka_0s?usp=sharing
+
+
 Example:
 
     pdfDrive -k big pharma
