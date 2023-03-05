@@ -15,6 +15,8 @@ import codecs
 import pdfdrive_help
 import pyprogress
 import grand_library_supremo
+from PyQt5.QtCore import QUrl
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 colorama.init()
 master_timeout = 120
@@ -23,6 +25,14 @@ socket.setdefaulttimeout(master_timeout)
 retry_max = 1
 success_downloads = []
 failed_downloads = []
+
+# Initialize Notification Player_default In Memory
+player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
+player_content_default = QMediaContent(player_url_default)
+player_default = QMediaPlayer()
+player_default.setMedia(player_content_default)
+player_default.setVolume(100)
+mute_default_player = False
 
 
 def color(s, c):
@@ -92,6 +102,9 @@ def download(url: str, fname: str):
     if os.path.exists(fname):
         if os.path.getsize(fname) > 100:
             print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
+            if mute_default_player is False:
+                player_default.play()
+                time.sleep(1)
             with codecs.open('./books_saved.txt', 'a+', encoding='utf8') as fo:
                 fo.write(fname+'\n')
             fo.close()
