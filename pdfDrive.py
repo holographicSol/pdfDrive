@@ -222,14 +222,15 @@ else:
 
     allow_grand_library = False
     allow_grand_library_1 = True
-    for i in range(1, int(_max_page)):
+    i = 1
+    while i < int(_max_page):
         if i_page >= i:
             print('_' * 28)
             if allow_grand_library is True:
                 grand_library_supremo.display_grand_library()
-            book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i_page))
+            book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i))
             """ Scan Pages for book URLSs """
-            print(f'{get_dt()} ' + color('[Page] ', c='M') + color(f'{i_page}', c='W'))
+            print(f'{get_dt()} ' + color('[Page] ', c='M') + color(f'{i}', c='W'))
             print(f'{get_dt()} ' + color('[Getting book links] ', c='M') + color('This may take a moment..', c='W'))
             print(f'{get_dt()} ' + color('[Book URLs] ', c='M') + str(color(str(book_urls), c='LC')))
             if book_urls is not None:
@@ -237,18 +238,18 @@ else:
                 print(f'{get_dt()} ' + color('[Books] ', c='M') + color(str(len(book_urls)), c='W'))
 
                 """ Download """
-                print(f'{get_dt()} ' + color('[Starting Downloads]', 'G'))
-                downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i_page), _max_page=str(_max_page))
+                print(f'{get_dt()} ' + color('[Starting Downloads]', c='G'))
+                downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i), _max_page=str(_max_page))
                 print('')
             else:
-                if i_page >= 1:
-                    i_page -= 1
+                if i >= 1:
+                    i -= 1
                     time.sleep(10)
                     allow_grand_library = False
                     allow_grand_library_1 = False
         else:
-            print(f'{get_dt()} [Skipping Page] {i_page}')
+            print(f'{get_dt()} [Skipping Page] {i}')
 
-        i_page += 1
+        i += 1
         if allow_grand_library_1 is True:
             allow_grand_library = True
