@@ -32,7 +32,7 @@ player_content_default = QMediaContent(player_url_default)
 player_default = QMediaPlayer()
 player_default.setMedia(player_content_default)
 player_default.setVolume(100)
-mute_default_player = False
+mute_default_player = True
 
 
 def color(s, c):
@@ -169,6 +169,10 @@ if '-h' in stdin:
 else:
     grand_library_supremo.display_grand_library()
     time.sleep(5)
+
+    if '-sfx' in stdin:
+        mute_default_player = False
+
     """ Page """
     i_page = 1
     if '-p' in stdin:
