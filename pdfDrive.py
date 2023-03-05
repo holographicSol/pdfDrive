@@ -224,7 +224,7 @@ else:
     allow_grand_library_1 = True
     i = 1
     while i < int(_max_page):
-        if i_page >= i:
+        if i >= i_page:
             print('_' * 28)
             if allow_grand_library is True:
                 grand_library_supremo.display_grand_library()
