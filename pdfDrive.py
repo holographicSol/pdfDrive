@@ -31,7 +31,7 @@ player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
 player_content_default = QMediaContent(player_url_default)
 player_default = QMediaPlayer()
 player_default.setMedia(player_content_default)
-player_default.setVolume(100)
+player_default.setVolume(10)
 mute_default_player = True
 
 
