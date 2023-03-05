@@ -17,6 +17,7 @@ import pyprogress
 import grand_library_supremo
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from threading import Thread
 
 colorama.init()
 master_timeout = 120
@@ -31,8 +32,10 @@ player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
 player_content_default = QMediaContent(player_url_default)
 player_default = QMediaPlayer()
 player_default.setMedia(player_content_default)
-player_default.setVolume(10)
+player_default.setVolume(100)
 mute_default_player = True
+# player_default.play()
+# time.sleep(2)
 
 
 def color(s, c):
@@ -60,10 +63,16 @@ def get_dt():
     return color(str('[' + str(datetime.datetime.now()) + ']'), c='W')
 
 
+def play():
+    player_default.play()
+    time.sleep(1)
+
+
 def download(url: str, fname: str):
     global retry_max
     global success_downloads
     global failed_downloads
+    global mute_default_player
     _download_finished = False
     _data = bytes()
     progress_mode = color('[DOWNLOADING] ', c='W')
@@ -103,8 +112,8 @@ def download(url: str, fname: str):
         if os.path.getsize(fname) > 100:
             print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
             if mute_default_player is False:
-                player_default.play()
-                time.sleep(1)
+                play_thread = Thread(target=play)
+                play_thread.start()
             with codecs.open('./books_saved.txt', 'a+', encoding='utf8') as fo:
                 fo.write(fname+'\n')
             fo.close()
