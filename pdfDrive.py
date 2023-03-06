@@ -161,7 +161,8 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
                     download(url=url, fname=fname)
                 else:
                     print(f'{get_dt()} ' + color('[URL] Unpopulated.', c='Y'))
-                    print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in records.', c='W'))
+            else:
+                print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in records.', c='W'))
         else:
             print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File already exists in filesystem.', c='W'))
 
