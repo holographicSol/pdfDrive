@@ -7,6 +7,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import datetime
+import fake_useragent
 from fake_useragent import UserAgent
 import colorama
 
@@ -101,6 +102,7 @@ def get_page_links(search_q: str, page: str) -> list:
 
 
 def enumerate_download_link(url: str) -> str:
+    returned_url = ''
     try:
         headers = {'User-Agent': str(ua.random)}
         rHead = requests.get(url, headers=headers, timeout=master_timeout)
@@ -112,19 +114,19 @@ def enumerate_download_link(url: str) -> str:
             if data_preview is not None:
                 data_preview = data_preview
                 break
-        url = ''
+
         if data_preview:
             data_preview = data_preview.replace('/ebook/preview?id=', '').replace('&session=', ' ')
             data_preview = data_preview.split(' ')
             data_id = data_preview[0]
             h_id = data_preview[1]
-            url = f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
+            returned_url = f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
     except Exception as e:
         print(f'{get_dt()} [Exception.enumerate_download_link] {e}')
         time.sleep(10)
         enumerate_download_link(url=url)
 
-    return url
+    return returned_url
 
 
 def make_file_name(book_url: str) -> str:

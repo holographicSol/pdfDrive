@@ -9,6 +9,7 @@ import pdfDriveTool
 import socket
 import urllib3
 import datetime
+import fake_useragent
 from fake_useragent import UserAgent
 import colorama
 import codecs
@@ -132,7 +133,7 @@ def download(url: str, fname: str):
             failed_downloads.append(fname)
 
 
-def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
+def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str, lib_path: str):
     global retry_max
     global success_downloads
     i_progress = 1
@@ -140,15 +141,15 @@ def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str):
         retry_max = 3
         print('_'*28)
         print('')
-        print(f'{get_dt()} ' + color('[Progress] ', c='LC') + color(str(f'{i_progress}/{len(_book_urls)} ({_i_page}/{_max_page})'), c='W'))
+        print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress}/{len(_book_urls)} ({_i_page}/{_max_page})"), c="W")}')
         print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
-        if not os.path.exists('./library/'):
-            os.mkdir('./library/')
-        if not os.path.exists('./library/' + _search_q):
-            os.mkdir('./library/' + _search_q)
+        if not os.path.exists(lib_path + '/'):
+            os.mkdir(lib_path + '/')
+        if not os.path.exists(lib_path + '/' + _search_q):
+            os.mkdir(lib_path + '/' + _search_q)
 
         filename = pdfDriveTool.make_file_name(book_url=book_url)
-        fname = './library/' + _search_q + '/' + filename
+        fname = lib_path + '/' + _search_q + '/' + filename
         print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
         if not os.path.exists(fname):
             if fname not in success_downloads:
@@ -181,6 +182,12 @@ else:
     if '-sfx' in stdin:
         mute_default_player = False
 
+    """ Library Path """
+    lib_path = './library/'
+    if '-P' in stdin:
+        idx = stdin.index('-P') + 1
+        lib_path = stdin[idx]
+
     """ Page """
     i_page = 1
     if '-p' in stdin:
@@ -207,14 +214,17 @@ else:
         _max_page = pdfDriveTool.get_pages(search_q=_search_q)
     print(f'{get_dt()} ' + color('[Pages] ', c='LC') + color(_max_page, c='W'))
 
-    with codecs.open('./books_failed.txt', 'r+', encoding='utf8') as fo:
+    if not os.path.exists('./books_failed.txt'):
+        open('./books_failed.txt', 'w').close()
+    with codecs.open('./books_failed.txt', 'r', encoding='utf8') as fo:
         for line in fo:
             line = line.strip()
             if line not in failed_downloads:
                 failed_downloads.append(line)
     fo.close()
-
-    with codecs.open('./books_saved.txt', 'r+', encoding='utf8') as fo:
+    if not os.path.exists('./books_saved.txt'):
+        open('./books_saved.txt', 'w').close()
+    with codecs.open('./books_saved.txt', 'r', encoding='utf8') as fo:
         for line in fo:
             line = line.strip()
             if line not in success_downloads:
@@ -240,7 +250,7 @@ else:
 
                 """ Download """
                 print(f'{get_dt()} ' + color('[Starting Downloads]', c='G'))
-                downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i), _max_page=str(_max_page))
+                downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i), _max_page=str(_max_page), lib_path=lib_path)
                 print('')
             else:
                 if i >= 1:
