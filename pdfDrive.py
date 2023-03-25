@@ -7,20 +7,15 @@ import sys
 import time
 import pdfDriveTool
 import socket
-import urllib3
 import datetime
-import fake_useragent
 from fake_useragent import UserAgent
 import colorama
 import codecs
 import pdfdrive_help
-import pyprogress
 import grand_library_supremo
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from threading import Thread
-import aiohttp
-import asyncio
 import requests
 
 colorama.init()
