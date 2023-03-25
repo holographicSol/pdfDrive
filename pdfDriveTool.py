@@ -94,8 +94,11 @@ def get_link(url: str) -> list:
         get_link(url=url)
 
 
-def get_page_links(search_q: str, page: str) -> list:
+def get_page_links(search_q: str, page: str, exact_match: bool) -> list:
     url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&page='+str(page))
+    if exact_match is True:
+        url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page='+str(page))
+
     print(f'{get_dt()} ' + color('[Scanning page] ', c='M') + color(url, c='W'))
     book_urls = get_link(url=url)
     return book_urls

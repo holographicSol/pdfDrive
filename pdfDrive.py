@@ -19,9 +19,12 @@ import grand_library_supremo
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from threading import Thread
+import aiohttp
+import asyncio
+import requests
 
 colorama.init()
-master_timeout = 120
+master_timeout = 86400  # 24h
 ua = UserAgent()
 socket.setdefaulttimeout(master_timeout)
 retry_max = 1
@@ -62,9 +65,35 @@ def get_dt():
     return color(str('[' + str(datetime.datetime.now()) + ']'), c='W')
 
 
+def convert_bytes(num):
+    """ bytes for humans """
+
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+        if num < 1024.0:
+            return str(num)+' '+x
+        num /= 1024.0
+
+
 def play():
     player_default.play()
     time.sleep(1)
+
+
+def download_file(url: str, fname: str):
+    local_filename = url.split('/')[-1]
+    # NOTE the stream=True parameter below
+    headers = {'User-Agent': str(ua.random)}
+    progress_mode = color('[DOWNLOADING] ', c='W')
+    with requests.get(url, stream=True, timeout=master_timeout, headers=headers) as r:
+        r.raise_for_status()
+        with open(fname, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                # If you have chunk encoded response uncomment if
+                # and set chunk_size parameter to None.
+                #if chunk:
+                f.write(chunk)
+                # pyprogress.display_progress_unknown(progress_mode, progress_list=pyprogress.arrow_a_12, color='CYAN')
+                print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname)))}', end='\r', flush=True)
 
 
 def download(url: str, fname: str):
@@ -74,63 +103,17 @@ def download(url: str, fname: str):
     global mute_default_player
     _download_finished = False
     _data = bytes()
-    progress_mode = color('[DOWNLOADING] ', c='W')
+    i_bytes = 0
     try:
-        http = urllib3.PoolManager(retries=5)
-        headers = {'User-Agent': str(ua.random)}
-        r = http.request('GET', url, preload_content=False, headers=headers, timeout=master_timeout)
-        while True:
-            pyprogress.display_progress_unknown(str_progress=progress_mode, progress_list=pyprogress.arrow_a_12,
-                                                color='CYAN')
-            data = r.read(1024)
-            if data:
-                _data += data
-            else:
-                _download_finished = True
-                break
+        download_file(url, fname)
+        print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
+        if mute_default_player is False:
+            play_thread = Thread(target=play)
+            play_thread.start()
     except Exception as e:
         print(f'{get_dt()} [Exception.download] {e}')
-    try:
-        if r:
-            r.release_conn()
-    except Exception as e:
-        print(f'{get_dt()} [Exception.download.r.release] {e}')
-
-    if _download_finished is False:
-        if retry_max > 0:
-            retry_max -= 1
-            print(f'{get_dt()} ' + color('Retrying.', c='Y'))
-            download(url=url, fname=fname)
-    else:
-        codecs.open(fname, 'w', encoding='utf8').close()
-        with open(fname, 'wb') as out:
-            out.write(_data)
-        out.close()
-
-    if os.path.exists(fname):
-        if os.path.getsize(fname) > 100:
-            print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
-            if mute_default_player is False:
-                play_thread = Thread(target=play)
-                play_thread.start()
-            with codecs.open('./books_saved.txt', 'a+', encoding='utf8') as fo:
-                fo.write(fname+'\n')
-            fo.close()
-        else:
-            print(f'{get_dt()} ' + color('[Download Failed] File less than 100 bytes.', c='R'))
-            if fname not in failed_downloads:
-                with codecs.open('./books_failed.txt', 'a+', encoding='utf8') as fo:
-                    fo.write(fname+'\n')
-                fo.close()
-                failed_downloads.append(fname)
-            os.remove(fname)
-    else:
-        print(f'{get_dt()} ' + color('[Download Failed] File did not save.', c='R'))
-        if fname not in failed_downloads:
-            with codecs.open('./books_failed.txt', 'a+', encoding='utf8') as fo:
-                fo.write(fname + '\n')
-            fo.close()
-            failed_downloads.append(fname)
+        print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+        # download(url, fname)
 
 
 def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str, lib_path: str):
@@ -188,6 +171,11 @@ else:
         idx = stdin.index('-P') + 1
         lib_path = stdin[idx]
 
+    """ Exact Match """
+    exact_match = False
+    if '-e' in stdin:
+        exact_match = True
+
     """ Page """
     i_page = 1
     if '-p' in stdin:
@@ -214,22 +202,24 @@ else:
         _max_page = pdfDriveTool.get_pages(search_q=_search_q)
     print(f'{get_dt()} ' + color('[Pages] ', c='LC') + color(_max_page, c='W'))
 
-    if not os.path.exists('./books_failed.txt'):
-        open('./books_failed.txt', 'w').close()
-    with codecs.open('./books_failed.txt', 'r', encoding='utf8') as fo:
-        for line in fo:
-            line = line.strip()
-            if line not in failed_downloads:
-                failed_downloads.append(line)
-    fo.close()
-    if not os.path.exists('./books_saved.txt'):
-        open('./books_saved.txt', 'w').close()
-    with codecs.open('./books_saved.txt', 'r', encoding='utf8') as fo:
-        for line in fo:
-            line = line.strip()
-            if line not in success_downloads:
-                success_downloads.append(line)
-    fo.close()
+    """ Use Download Log """
+    if '--no-mem' not in stdin:
+        if not os.path.exists('./books_failed.txt'):
+            open('./books_failed.txt', 'w').close()
+        with codecs.open('./books_failed.txt', 'r', encoding='utf8') as fo:
+            for line in fo:
+                line = line.strip()
+                if line not in failed_downloads:
+                    failed_downloads.append(line)
+        fo.close()
+        if not os.path.exists('./books_saved.txt'):
+            open('./books_saved.txt', 'w').close()
+        with codecs.open('./books_saved.txt', 'r', encoding='utf8') as fo:
+            for line in fo:
+                line = line.strip()
+                if line not in success_downloads:
+                    success_downloads.append(line)
+        fo.close()
 
     allow_grand_library = False
     allow_grand_library_1 = True
@@ -239,7 +229,8 @@ else:
             print('_' * 28)
             if allow_grand_library is True:
                 grand_library_supremo.display_grand_library()
-            book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i))
+            book_urls = pdfDriveTool.get_page_links(search_q=_search_q, page=str(i), exact_match=exact_match)
+
             """ Scan Pages for book URLSs """
             print(f'{get_dt()} ' + color('[Page] ', c='M') + color(f'{i}', c='W'))
             print(f'{get_dt()} ' + color('[Getting book links] ', c='M') + color('This may take a moment..', c='W'))
