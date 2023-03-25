@@ -74,6 +74,12 @@ def convert_bytes(num):
         num /= 1024.0
 
 
+def clear_console_line(char_limit):
+    """ clear n chars from console """
+
+    print(' '*char_limit, end='\r', flush=True)
+
+
 def play():
     player_default.play()
     time.sleep(1)
@@ -93,6 +99,7 @@ def download_file(url: str, fname: str):
                 #if chunk:
                 f.write(chunk)
                 # pyprogress.display_progress_unknown(progress_mode, progress_list=pyprogress.arrow_a_12, color='CYAN')
+                clear_console_line(char_limit=200)
                 print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname)))}', end='\r', flush=True)
 
 
