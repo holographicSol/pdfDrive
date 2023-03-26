@@ -81,21 +81,22 @@ def play():
 
 
 def download_file(url: str, fname: str):
-    local_filename = url.split('/')[-1]
-    # NOTE the stream=True parameter below
+    # local_filename = url.split('/')[-1]
     headers = {'User-Agent': str(ua.random)}
     progress_mode = color('[DOWNLOADING] ', c='W')
     with requests.get(url, stream=True, timeout=master_timeout, headers=headers) as r:
         r.raise_for_status()
-        with open(fname, 'wb') as f:
+        with open(fname+'.tmp', 'wb') as f:
             for chunk in r.iter_content(chunk_size=8192):
                 # If you have chunk encoded response uncomment if
                 # and set chunk_size parameter to None.
                 #if chunk:
                 f.write(chunk)
-                # pyprogress.display_progress_unknown(progress_mode, progress_list=pyprogress.arrow_a_12, color='CYAN')
                 clear_console_line(char_limit=200)
-                print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname)))}', end='\r', flush=True)
+                print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
+    os.replace(fname+'.tmp', fname)
+    if os.path.exists(fname+'.tmp'):
+        os.remove(fname+'.tmp')
 
 
 def download(url: str, fname: str):
@@ -112,9 +113,21 @@ def download(url: str, fname: str):
         if mute_default_player is False:
             play_thread = Thread(target=play)
             play_thread.start()
+        # add book to saved list for multi-drive/multi-system memory
+        idx = fname.rfind('/')
+        to_saved_list = fname[idx+1:]
+        if to_saved_list not in success_downloads:
+            success_downloads.append(line)
+            if not os.path.exists('./books_saved.txt'):
+                open('./books_saved.txt', 'w').close()
+            with codecs.open('./books_saved.txt', 'a', encoding='utf8') as fo:
+                fo.write(to_saved_list + '\n')
+            fo.close()
     except Exception as e:
         print(f'{get_dt()} [Exception.download] {e}')
         print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+        if os.path.exists(fname):
+            os.remove(fname)
         # download(url, fname)
 
 
