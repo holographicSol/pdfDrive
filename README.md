@@ -26,6 +26,7 @@ Notes:
 
     A light library manager is provided as this new version of pdfdrive is not backwards compatible in regards to the books_saved.txt.
     You can use library manager to create a new books_saved.txt that is compatible with this new version of pdfdrive. (--enumerate-library)
+    Also library manager can remove PDF files that may have been too large to download successfully using the presious version.
 
     Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query. 
 
