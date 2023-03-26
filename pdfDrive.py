@@ -94,8 +94,11 @@ def download_file(url: str, fname: str):
                 f.write(chunk)
                 clear_console_line(char_limit=200)
                 print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
-    os.replace(fname+'.tmp', fname)
     if os.path.exists(fname+'.tmp'):
+        if os.path.getsize(fname+'.tmp') >= 1024:
+            os.replace(fname+'.tmp', fname)
+        else:
+            print(f'{get_dt()} ' + color('[Download Failed] File is <= 1024 bytes and will be removed.', c='Y'))
         os.remove(fname+'.tmp')
 
 
@@ -109,10 +112,12 @@ def download(url: str, fname: str):
     i_bytes = 0
     try:
         download_file(url, fname)
-        print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
-        if mute_default_player is False:
-            play_thread = Thread(target=play)
-            play_thread.start()
+        if os.path.exists(fname):
+            print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
+            if mute_default_player is False:
+                play_thread = Thread(target=play)
+                play_thread.start()
+
         # add book to saved list for multi-drive/multi-system memory
         idx = fname.rfind('/')
         to_saved_list = fname[idx+1:]
