@@ -1,9 +1,13 @@
 import os
 import sys
-import remove_bad_pdf_files
 import codecs
+from pathlib import Path
+import library_manager_help
+import remove_bad_pdf_files
+import remove_duplicates
 
 stdin = sys.argv
+print('')
 
 
 def abort_op():
@@ -32,7 +36,7 @@ if '-P' in stdin:
             else:
                 abort_op()
 
-        elif '--enumerate-library':
+        elif '--enumerate-library' in stdin:
             """ Append filenames to file for memory when skipping downloads across multiple drives/systems """
 
             print('')
@@ -56,5 +60,43 @@ if '-P' in stdin:
                     fo.write(entry + '\n')
             fo.close()
             print(f'Complete.')
+
+        elif '--remove-duplicates' in stdin:
+            recursive = False
+            if '-R' in stdin:
+                recursive = True
+            print('-- enumerating: this may take a moment')
+            duplicates = remove_duplicates.find_duplicate_files(target=Path(target), recursive=recursive)
+            if duplicates:
+                i_count = 0
+                i_duplicates = 0
+                filtered_duplicates = []
+                for duplicate in duplicates:
+                    print(f'[DUPLICATE_files] {len(duplicate)} {duplicate[0]}')
+                    for sub_duplicate in duplicate:
+                        i_count += 1
+                        if str(sub_duplicate).strip() != str(duplicate[0]).strip():
+                            print(f'    {sub_duplicate}')
+                            i_duplicates += 1
+                            filtered_duplicates.append(sub_duplicate)
+                    i_count += 1
+                    if i_count == 100:
+                        i_count = 0
+                        input('--- more ---')
+                print('')
+                print('[WARNING] This will potentially delete a lot of files! Please be sure before continuing.')
+                print(f'[DUPLICATES] {len(filtered_duplicates)}')
+                usr_input = input('continue (y\\n)? ')
+                if usr_input == 'y' or usr_input == 'Y':
+                    for duplicate in filtered_duplicates:
+                        print(f'-- removing {duplicate}')
+                        try:
+                            os.remove(duplicate)
+                        except Exception as e:
+                            print(e)
+            else:
+                abort_op()
+    else:
+        print(f'[INVALID] Path: {target}')
 
 print('')
