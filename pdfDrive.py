@@ -98,7 +98,8 @@ def download_file(url: str, fname: str):
         if os.path.getsize(fname+'.tmp') >= 1024:
             os.replace(fname+'.tmp', fname)
         else:
-            print(f'{get_dt()} ' + color('[Download Failed] File is <= 1024 bytes and will be removed.', c='Y'))
+            print(f'{get_dt()} ' + color('[Download Failed] File is < 1024 bytes and will be removed.', c='Y'))
+    if os.path.exists(fname+'.tmp'):
         os.remove(fname+'.tmp')
 
 
@@ -122,7 +123,7 @@ def download(url: str, fname: str):
         idx = fname.rfind('/')
         to_saved_list = fname[idx+1:]
         if to_saved_list not in success_downloads:
-            success_downloads.append(line)
+            success_downloads.append(to_saved_list)
             if not os.path.exists('./books_saved.txt'):
                 open('./books_saved.txt', 'w').close()
             with codecs.open('./books_saved.txt', 'a', encoding='utf8') as fo:
