@@ -21,14 +21,8 @@ Features:
 
 Notes:
 
-    Downloader still requires extra handling for many things. serves the purpose for me:
-    
-    Downloads saved as < 100 bytes are flagged and deleted.
-    
-    Downloads > 100 bytes that save sucessfully may require extra handling and be otherwise unusable.
-    
-    Enumerates download url before ever landing on the final page containing the download link that contains the
-    full download href as the download href takes time to populate.
+    Keeps track of what has been downloaded so that downloading can continue efficiently accross multiple drives/systems when
+    backing-up/sharing the books_saved.txt file accross multiple instances of pdfDrive.
 
     Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query. 
 
