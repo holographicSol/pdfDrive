@@ -24,6 +24,9 @@ Notes:
     Keeps track of what has been downloaded so that downloading can continue efficiently accross multiple drives/systems when
     backing-up/sharing the books_saved.txt file accross multiple instances of pdfDrive.
 
+    A light library manager is provided as this new version of pdfdrive is not backwards compatible in regards to the books_saved.txt.
+    You can use library manager to create a new books_saved.txt that is compatible with this new version of pdfdrive. (--enumerate-library)
+
     Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query. 
 
 
