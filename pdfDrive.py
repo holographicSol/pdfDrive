@@ -21,16 +21,16 @@ if os.name in ('nt', 'dos'):
         from PyQt5.QtCore import QUrl
         from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
         from threading import Thread
+
+        # Initialize Notification Player_default In Memory
+        player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
+        player_content_default = QMediaContent(player_url_default)
+        player_default = QMediaPlayer()
+        player_default.setMedia(player_content_default)
+        player_default.setVolume(6)
+        mute_default_player = True
     except:
         pass
-
-    # Initialize Notification Player_default In Memory
-    player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
-    player_content_default = QMediaContent(player_url_default)
-    player_default = QMediaPlayer()
-    player_default.setMedia(player_content_default)
-    player_default.setVolume(6)
-    mute_default_player = True
 
 colorama.init()
 master_timeout = 86400  # 24h
@@ -88,9 +88,7 @@ def play():
 
 
 def download_file(url: str, fname: str):
-    # local_filename = url.split('/')[-1]
     headers = {'User-Agent': str(ua.random)}
-    progress_mode = color('[DOWNLOADING] ', c='W')
     with requests.get(url, stream=True, timeout=master_timeout, headers=headers) as r:
         r.raise_for_status()
         with open(fname+'.tmp', 'wb') as f:
