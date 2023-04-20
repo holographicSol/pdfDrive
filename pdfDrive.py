@@ -13,10 +13,21 @@ import colorama
 import codecs
 import pdfdrive_help
 import grand_library_supremo
-from PyQt5.QtCore import QUrl
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from threading import Thread
 import requests
+
+# Notification of New Media
+if os.name in ('nt', 'dos'):
+    from PyQt5.QtCore import QUrl
+    from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+    from threading import Thread
+
+    # Initialize Notification Player_default In Memory
+    player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
+    player_content_default = QMediaContent(player_url_default)
+    player_default = QMediaPlayer()
+    player_default.setMedia(player_content_default)
+    player_default.setVolume(6)
+    mute_default_player = True
 
 colorama.init()
 master_timeout = 86400  # 24h
@@ -25,14 +36,6 @@ socket.setdefaulttimeout(master_timeout)
 retry_max = 1
 success_downloads = []
 failed_downloads = []
-
-# Initialize Notification Player_default In Memory
-player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
-player_content_default = QMediaContent(player_url_default)
-player_default = QMediaPlayer()
-player_default.setMedia(player_content_default)
-player_default.setVolume(6)
-mute_default_player = True
 
 
 def color(s, c):
@@ -76,8 +79,9 @@ def clear_console_line(char_limit):
 
 
 def play():
-    player_default.play()
-    time.sleep(1)
+    if os.name in ('nt', 'dos'):
+        player_default.play()
+        time.sleep(1)
 
 
 def download_file(url: str, fname: str):
@@ -107,7 +111,9 @@ def download(url: str, fname: str):
     global retry_max
     global success_downloads
     global failed_downloads
-    global mute_default_player
+
+    if os.name in ('nt', 'dos'):
+        global mute_default_player
     _download_finished = False
     _data = bytes()
     i_bytes = 0
@@ -115,9 +121,11 @@ def download(url: str, fname: str):
         download_file(url, fname)
         if os.path.exists(fname):
             print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
-            if mute_default_player is False:
-                play_thread = Thread(target=play)
-                play_thread.start()
+
+            if os.name in ('nt', 'dos'):
+                if mute_default_player is False:
+                    play_thread = Thread(target=play)
+                    play_thread.start()
 
         # add book to saved list for multi-drive/multi-system memory
         idx = fname.rfind('/')
@@ -183,8 +191,9 @@ else:
     grand_library_supremo.display_grand_library()
     time.sleep(5)
 
-    if '-sfx' in stdin:
-        mute_default_player = False
+    if os.name in ('nt', 'dos'):
+        if '-sfx' in stdin:
+            mute_default_player = False
 
     """ Library Path """
     lib_path = './library/'
@@ -245,7 +254,7 @@ else:
     allow_grand_library = False
     allow_grand_library_1 = True
     i = 1
-    while i < int(_max_page):
+    while i <= int(_max_page):
         if i >= i_page:
             print('_' * 28)
             if allow_grand_library is True:
