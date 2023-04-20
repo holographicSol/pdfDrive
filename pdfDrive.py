@@ -17,9 +17,12 @@ import requests
 
 # Notification of New Media
 if os.name in ('nt', 'dos'):
-    from PyQt5.QtCore import QUrl
-    from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-    from threading import Thread
+    try:
+        from PyQt5.QtCore import QUrl
+        from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+        from threading import Thread
+    except:
+        pass
 
     # Initialize Notification Player_default In Memory
     player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
