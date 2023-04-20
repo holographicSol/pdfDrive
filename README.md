@@ -38,6 +38,15 @@ Notes:
     Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query. 
 
 
+Termux:
+
+    In Termux application:
+    1. git clone https://github.com/holographicSol/pdfDrive
+    2. cd ./pdfDrive
+    3. ./requirements.sh
+    4. python ./pdfDrive.py -h
+
+
 Simple Example:
 
     pdfDrive -k big pharma
