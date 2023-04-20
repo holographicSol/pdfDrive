@@ -99,7 +99,7 @@ def download_file(url: str, fname: str):
                 # and set chunk_size parameter to None.
                 #if chunk:
                 f.write(chunk)
-                clear_console_line(char_limit=200)
+                clear_console_line(char_limit=50)
                 print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
     if os.path.exists(fname+'.tmp'):
         if os.path.getsize(fname+'.tmp') >= 1024:
