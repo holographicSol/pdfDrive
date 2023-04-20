@@ -37,14 +37,26 @@ Notes:
 
     Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query. 
 
+Windows:
 
-Termux:
+    In Powershell/CMD:
+    1. git clone https://github.com/holographicSol/pdfDrive
+    2. cd ./pdfDrive
+    3. ./requirements.bat
+    4. python ./pdfDrive.py -h
+
+Termux for low-power/portability operation:
 
     In Termux application:
     1. git clone https://github.com/holographicSol/pdfDrive
     2. cd ./pdfDrive
     3. ./requirements.sh
     4. python ./pdfDrive.py -h
+
+
+Linux:
+
+    * Use steps from Termux ^.
 
 
 Simple Example:
