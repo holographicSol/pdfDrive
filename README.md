@@ -47,6 +47,7 @@ Windows:
 
 Termux for low-power/portability operation:
 
+    Note: Reccomend rotating device horizontally for optimum viewing experience.
     In Termux application:
     1. git clone https://github.com/holographicSol/pdfDrive
     2. cd ./pdfDrive
