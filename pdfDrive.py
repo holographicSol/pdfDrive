@@ -36,12 +36,12 @@ colorama.init()
 master_timeout = 86400  # 24h
 ua = UserAgent()
 socket.setdefaulttimeout(master_timeout)
-retry_max = 1
 success_downloads = []
 failed_downloads = []
 
 
-def color(s, c):
+def color(s: str, c: str) -> str:
+    """ color print """
     if c == 'W':
         return colorama.Style.BRIGHT + colorama.Fore.WHITE + str(s) + colorama.Style.RESET_ALL
     elif c == 'LM':
@@ -62,73 +62,102 @@ def color(s, c):
         return colorama.Style.BRIGHT + colorama.Fore.RED + str(s) + colorama.Style.RESET_ALL
 
 
-def get_dt():
+def get_dt() -> str:
+    """ formatted datetime string for tagging output """
     return color(str('[' + str(datetime.datetime.now()) + ']'), c='W')
 
 
-def convert_bytes(num):
+def convert_bytes(num: int) -> str:
     """ bytes for humans """
-
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
             return str(num)+' '+x
         num /= 1024.0
 
 
-def clear_console_line(char_limit):
+def clear_console_line(char_limit: int):
     """ clear n chars from console """
-
     print(' '*char_limit, end='\r', flush=True)
 
 
 def play():
+    """ notification sound """
     if os.name in ('nt', 'dos'):
         player_default.play()
         time.sleep(1)
 
 
 def download_file(url: str, fname: str):
+
+    # use a random user agent for download stability
     headers = {'User-Agent': str(ua.random)}
+
+    # connect
     with requests.get(url, stream=True, timeout=master_timeout, headers=headers) as r:
         r.raise_for_status()
+
+        # open a temporary file of our created filename
         with open(fname+'.tmp', 'wb') as f:
+
+            # iterate though chunks of the stream
             for chunk in r.iter_content(chunk_size=8192):
+
                 # If you have chunk encoded response uncomment if
                 # and set chunk_size parameter to None.
-                #if chunk:
+                # if chunk:
+
+                # write the chunk to the temporary file
                 f.write(chunk)
+
+                # output: display download progress
                 clear_console_line(char_limit=50)  # reduce/increase char_limit if necessary for smaller screens.
                 print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
+
+    # check: does the temporary file exists
     if os.path.exists(fname+'.tmp'):
+
+        # check: temporary file worth keeping? (<1024 bytes would be less than 1024 characters, reduce this if needed)
+        # - sometimes file exists on a different server, this software does not intentionally follow any external links,
+        # - if this happens then a very small file may be created during download and then will be deleted.
         if os.path.getsize(fname+'.tmp') >= 1024:
+
+            # create final download file from temporary file
             os.replace(fname+'.tmp', fname)
         else:
             print(f'{get_dt()} ' + color('[Download Failed] File is < 1024 bytes and will be removed.', c='Y'))
+
+    # check: clean up the temporary file if it exists.
     if os.path.exists(fname+'.tmp'):
         os.remove(fname+'.tmp')
 
 
-def download(url: str, fname: str):
-    global retry_max
+def download_handler(url: str, fname: str):
     global success_downloads
     global failed_downloads
 
+    # global mute_default_player after platform check (Be compatible on Termux on Android)
     if os.name in ('nt', 'dos'):
         global mute_default_player
+
+    # track progress
     _download_finished = False
     _data = bytes()
-    i_bytes = 0
+
     try:
+        # download file
         download_file(url, fname)
+
+        # display download success (does not guarantee a usable file, some checks are performed before this point)
         if os.path.exists(fname):
             print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
 
+            # notification sound after platform check (Be compatible on Termux on Android)
             if os.name in ('nt', 'dos'):
                 if mute_default_player is False:
                     play_thread = Thread(target=play)
                     play_thread.start()
 
-        # add book to saved list for multi-drive/multi-system memory
+        # add book to saved list for multi-drive/multi-system memory (continue where you left off on another disk/sys)
         idx = fname.rfind('/')
         to_saved_list = fname[idx+1:]
         if to_saved_list not in success_downloads:
@@ -138,41 +167,57 @@ def download(url: str, fname: str):
             with codecs.open('./books_saved.txt', 'a', encoding='utf8') as fo:
                 fo.write(to_saved_list + '\n')
             fo.close()
+
     except Exception as e:
+        # output: any issues
         print(f'{get_dt()} [Exception.download] {e}')
         print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+
+        # remove the file if it was created to clean up after ourselves
         if os.path.exists(fname):
             os.remove(fname)
-        # download(url, fname)
 
 
-def downloader(_book_urls: list, _search_q: str, _i_page: str, _max_page: str, lib_path: str):
-    global retry_max
+def pre_process(_book_urls: list, _search_q: str, _i_page: str, _max_page: str, _lib_path: str):
     global success_downloads
     i_progress = 1
+
     for book_url in _book_urls:
-        retry_max = 3
+
+        # output: header
         print('_'*28)
         print('')
         print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress}/{len(_book_urls)} ({_i_page}/{_max_page})"), c="W")}')
         print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
-        if not os.path.exists(lib_path + '/'):
-            os.mkdir(lib_path + '/')
-        if not os.path.exists(lib_path + '/' + _search_q):
-            os.mkdir(lib_path + '/' + _search_q)
 
+        # check: library directory exists
+        if not os.path.exists(_lib_path + '/'):
+            os.mkdir(_lib_path + '/')
+
+        # check: library category directory exists
+        if not os.path.exists(_lib_path + '/' + _search_q):
+            os.mkdir(_lib_path + '/' + _search_q)
+
+        # check: create a filename from url
         filename = pdfDriveTool.make_file_name(book_url=book_url)
-        fname = lib_path + '/' + _search_q + '/' + filename
+        fname = _lib_path + '/' + _search_q + '/' + filename
+
+        # output: filename
         print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
+
+        # check: filename already exists
         if not os.path.exists(fname):
+
+            # check: filename exists in books_saved.txt
             if fname not in success_downloads:
 
+                # create download url (don't follow links to download page containing the actual download link)
                 print(f'{get_dt()} ' + color('[Enumerating] ', c='LC') + color(str(book_url), c='W'))
                 url = pdfDriveTool.enumerate_download_link(url=book_url)
                 if url:
-
+                    # download.
                     print(f'{get_dt()} ' + color('[Enumeration result] ', c='LC') + color(str(url), c='W'))
-                    download(url=url, fname=fname)
+                    download_handler(url=url, fname=fname)
                 else:
                     print(f'{get_dt()} ' + color('[URL] Unpopulated.', c='Y'))
             else:
@@ -272,7 +317,8 @@ else:
 
                 """ Download """
                 print(f'{get_dt()} ' + color('[Starting Downloads]', c='G'))
-                downloader(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i), _max_page=str(_max_page), lib_path=lib_path)
+                pre_process(_book_urls=book_urls, _search_q=_search_q, _i_page=str(i), _max_page=str(_max_page),
+                            _lib_path=lib_path)
                 print('')
             else:
                 if i >= 1:
