@@ -16,6 +16,7 @@ import grand_library_supremo
 import requests
 
 # Notification of New Media
+# Platform check (Be compatible on Termux on Android, skip Pyqt5 import)
 if os.name in ('nt', 'dos'):
     try:
         from PyQt5.QtCore import QUrl
