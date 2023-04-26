@@ -14,6 +14,7 @@ import codecs
 import pdfdrive_help
 import grand_library_supremo
 import requests
+import shutil
 
 # Notification of New Media
 # Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
@@ -107,12 +108,30 @@ def download_file(url: str, fname: str):
                 # and set chunk_size parameter to None.
                 # if chunk:
 
-                # write the chunk to the temporary file
-                f.write(chunk)
+                # storage check:
+                total, used, free = shutil.disk_usage("./")
+                if free > 8192+1024:
 
-                # output: display download progress
-                clear_console_line(char_limit=50)  # reduce/increase char_limit if necessary for smaller screens.
-                print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
+                    # write the chunk to the temporary file
+                    f.write(chunk)
+
+                    # output: display download progress
+                    clear_console_line(char_limit=50)  # reduce/increase char_limit if necessary for smaller screens.
+                    print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
+
+                else:
+                    # output: out of disk space
+                    clear_console_line(char_limit=50)  # reduce/increase char_limit if necessary for smaller screens.
+                    print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
+
+                    # delete temporary file if exists
+                    if os.path.exists(fname + '.tmp'):
+                        os.remove(fname + '.tmp')
+                    time.sleep(1)
+
+                    # exit.
+                    print('')
+                    exit(0)
 
     # check: does the temporary file exists
     if os.path.exists(fname+'.tmp'):
