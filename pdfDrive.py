@@ -119,7 +119,7 @@ def download_file(url: str, fname: str):
 
         # check: temporary file worth keeping? (<1024 bytes would be less than 1024 characters, reduce this if needed)
         # - sometimes file exists on a different server, this software does not intentionally follow any external links,
-        # - if this happens then a very small file may be created during download and then will be deleted.
+        # - if the file is in another place then a very small file may be downloaded and will then be detected/deleted.
         if os.path.getsize(fname+'.tmp') >= 1024:
 
             # create final download file from temporary file
