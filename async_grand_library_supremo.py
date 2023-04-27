@@ -281,11 +281,11 @@ async def main():
     url = url + '&pagecount=&pubyear=&searchin=&page='
 
     print(f'{get_dt()} ' + color('[Phase One] ', c='LC') + f'Gathering initial links...')
-    for i in range(i_page, _max_page):
+    for current_page in range(i_page, _max_page):
         tasks = []
 
         t0 = time.perf_counter()
-        url = url+str(i)
+        url = url+str(current_page)
         task = asyncio.create_task(scrape_pages(url))
         tasks.append(task)
         results = await asyncio.gather(*tasks)
@@ -309,56 +309,62 @@ async def main():
         print(f'{get_dt()} ' + color('[Enumerated Results] ', c='LC') + f'{len(enumerated_results)}')
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
-        # download
-        i_progress = 0
-        for enumerated_result in enumerated_results:
-            print('_' * 28)
-            print('')
-            print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(results)}"), c="W")}')
-            print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
+        if len(results) == len(enumerated_results):
 
-            # check: library category directory exists
-            if not os.path.exists(lib_path + '/' + _search_q):
-                os.makedirs(lib_path + '/' + _search_q, exist_ok=True)
+            # download
+            i_progress = 0
+            for enumerated_result in enumerated_results:
+                print('_' * 28)
+                print('')
+                print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(enumerated_results)} ({current_page}/{_max_page})"), c="W")}')
+                print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
 
-            # make filename
-            filename = make_file_name(book_url=results[i_progress])
-            fname = lib_path + '/' + _search_q + '/' + filename
+                # check: library category directory exists
+                if not os.path.exists(lib_path + '/' + _search_q):
+                    os.makedirs(lib_path + '/' + _search_q, exist_ok=True)
 
-            # output: filename and URL
-            print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
-            print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result), c='M'))
+                # make filename
+                filename = make_file_name(book_url=results[i_progress])
+                fname = lib_path + '/' + _search_q + '/' + filename
 
-            if not os.path.exists(fname):
+                # output: filename and URL
+                print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
+                print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result), c='M'))
 
-                # check: filename exists in books_saved.txt
-                if fname not in success_downloads:
-                    try:
-                        # download file
-                        if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
-                                         _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
-                                         _log=True) is True:
+                if not os.path.exists(fname):
 
-                            # notification sound after platform check (Be compatible on Termux on Android)
-                            if os.name in ('nt', 'dos'):
-                                if mute_default_player is False:
-                                    play_thread = Thread(target=play)
-                                    play_thread.start()
+                    # check: filename exists in books_saved.txt
+                    if fname not in success_downloads:
+                        try:
+                            # download file
+                            if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
+                                             _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
+                                             _log=True) is True:
 
-                    except Exception as e:
-                        # output: any issues
-                        print(f'{get_dt()} [Exception.download] {e}')
-                        print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+                                # notification sound after platform check (Be compatible on Termux on Android)
+                                if os.name in ('nt', 'dos'):
+                                    if mute_default_player is False:
+                                        play_thread = Thread(target=play)
+                                        play_thread.start()
 
-                        # remove the file if it was created to clean up after ourselves
-                        if os.path.exists(fname):
-                            os.remove(fname)
+                        except Exception as e:
+                            # output: any issues
+                            print(f'{get_dt()} [Exception.download] {e}')
+                            print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+
+                            # remove the file if it was created to clean up after ourselves
+                            if os.path.exists(fname):
+                                os.remove(fname)
+                    else:
+                        print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in records.', c='W'))
                 else:
-                    print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in records.', c='W'))
-            else:
-                print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File already exists in filesystem.', c='W'))
+                    print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File already exists in filesystem.', c='W'))
 
-            i_progress += 1
+                i_progress += 1
+
+        else:
+            print(f'{get_dt()} ' + color('[WARNING] ', c='Y') + color('Skipping page due to list misalignment.', c='W'))
+            time.sleep(3)
 
         grand_library_supremo.display_grand_library()
 
