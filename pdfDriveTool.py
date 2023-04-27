@@ -4,8 +4,6 @@ Written by Benjamin Jack Cullen aka Holographic_Sol
 
 import socket
 import time
-import requests
-from bs4 import BeautifulSoup
 import datetime
 from fake_useragent import UserAgent
 import colorama
@@ -53,7 +51,7 @@ async def get_site_content(_url):
         async with session.get(_url) as resp:
             text = await resp.read()
 
-    return BeautifulSoup(text.decode('utf-8'), 'html5lib')
+    return BeautifulSoup(text, 'html5lib')
 
 
 def get_pages(search_q: str) -> str:
