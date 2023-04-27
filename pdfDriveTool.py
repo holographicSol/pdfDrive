@@ -108,7 +108,7 @@ def get_link(url: str) -> list:
         return book_urls
 
     else:
-        print(f'{get_dt()} [get_link] May have ran out of pages.')
+        print(f'{get_dt()} ' + color('[get_link] ', c='M') + color(f'May have ran out of pages.', c='W'))
         time.sleep(1)
 
 

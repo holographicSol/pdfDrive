@@ -381,7 +381,7 @@ else:
                             _lib_path=lib_path)
                 print('')
             else:
-                print(f'{get_dt()} ' + '[MAX_PAGE] Possibly reached max page.')
+                print(f'{get_dt()} ' + color('[MAX_PAGE] ', c='M') + color(f'Possibly reached max page.', c='W'))
                 i = _max_page
 
         else:
