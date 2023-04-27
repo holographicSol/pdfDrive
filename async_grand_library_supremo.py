@@ -137,7 +137,7 @@ def parse_soup_phase_two(soup):
 
 
 async def scrape_pages(url):
-    """ scape for book URLs """
+    """ scrape for book URLs """
     headers = {'User-Agent': str(ua.random)}
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as resp:
