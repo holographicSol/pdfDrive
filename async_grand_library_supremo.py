@@ -278,7 +278,7 @@ async def scrape_pages(url):
         headers = {'User-Agent': str(ua.random)}
         async with aiohttp.ClientSession(headers=headers, **client_args) as session:
             async with session.get(url) as resp:
-                body = await resp.text()
+                body = await resp.text(encoding=None, errors='ignore')
                 soup = await asyncio.to_thread(get_soup, body)
                 book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
     except asyncio.exceptions.TimeoutError:
