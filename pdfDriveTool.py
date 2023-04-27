@@ -52,7 +52,7 @@ def get_pages(search_q: str) -> str:
     headers = {'User-Agent': str(ua.random)}
     rHead = requests.get('https://www.pdfdrive.com/search?q=' + search_q, headers=headers, timeout=master_timeout)
     data = rHead.text
-    soup = BeautifulSoup(data, "html.parser")
+    soup = BeautifulSoup(data, "lxml")
 
     # parse the html soup for references to page
     for link in soup.find_all('a'):
@@ -84,7 +84,7 @@ def get_link(url: str) -> list:
         headers = {'User-Agent': str(ua.random)}
         rHead = requests.get(url, headers=headers, timeout=master_timeout)
         data = rHead.text
-        soup = BeautifulSoup(data, "html.parser")
+        soup = BeautifulSoup(data, "lxml")
 
         # parse the html soup for book links
         for link in soup.find_all('a'):
@@ -139,7 +139,7 @@ def enumerate_download_link(url: str) -> str:
         headers = {'User-Agent': str(ua.random)}
         rHead = requests.get(url, headers=headers, timeout=master_timeout)
         data = rHead.text
-        soup = BeautifulSoup(data, "html.parser")
+        soup = BeautifulSoup(data, "lxml")
 
         # parse the soup for a specific html tag that we can use to create the final download link before having seen
         # the final download link (pdf-drive currently has a time wait on the final download page, no need to wait)
