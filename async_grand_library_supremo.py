@@ -285,6 +285,12 @@ async def scrape_pages(url):
         print(f'{get_dt()} ' + color('[TIMEOUT] ', c='LC') + f'Initial scraper timeout. Retrying in {timeout_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await scrape_pages(url)
+
+    except aiohttp.ClientConnectorError:
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Initial scraper connection error. Retrying in {timeout_retry} seconds.')
+        await asyncio.sleep(timeout_retry)
+        await enumerate_links(url)
+
     return book_urls
 
 
@@ -304,6 +310,11 @@ async def enumerate_links(url: str):
                     book_urls.append([url, data])
     except asyncio.exceptions.TimeoutError:
         print(f'{get_dt()} ' + color('[TIMEOUT] ', c='LC') + f'Enumeration timeout. Retrying in {timeout_retry} seconds.')
+        await asyncio.sleep(timeout_retry)
+        await enumerate_links(url)
+
+    except aiohttp.ClientConnectorError:
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Enumeration connection error. Retrying in {timeout_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
