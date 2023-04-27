@@ -148,7 +148,7 @@ async def scrape_pages(url):
 
 
 async def enumerate_links(url: str):
-    """ scape for book download links """
+    """ scrape for book download links """
     headers = {'User-Agent': str(ua.random)}
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as resp:
