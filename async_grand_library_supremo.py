@@ -267,7 +267,6 @@ async def scrape_pages(url):
             body = await resp.text()
             soup = await asyncio.to_thread(get_soup, body)
             book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
-            print(book_urls)
             return book_urls
 
 
@@ -281,6 +280,7 @@ async def enumerate_links(url: str):
             soup = await asyncio.to_thread(get_soup, body)
             if soup:
                 data = await asyncio.to_thread(parse_soup_phase_two, soup)
+                # append together for list alignment later (when creating filenames for current download link)
                 book_urls.append([url, data])
     return book_urls
 
