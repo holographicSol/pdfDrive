@@ -108,10 +108,8 @@ def get_link(url: str) -> list:
         return book_urls
 
     else:
-        print(f'{get_dt()} [get_link] trying to obtain book URLs')
-        time.sleep(5)
-        # try again
-        get_link(url=url)
+        print(f'{get_dt()} [get_link] May have ran out of pages.')
+        time.sleep(1)
 
 
 def get_page_links(search_q: str, page: str, exact_match: bool) -> list:
@@ -121,7 +119,7 @@ def get_page_links(search_q: str, page: str, exact_match: bool) -> list:
 
     # create url with exact match condition in the url
     if exact_match is True:
-        url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page='+str(page))#
+        url = str('https://www.pdfdrive.com/search?q=' + str(search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page='+str(page))
 
     # output: created url
     print(f'{get_dt()} ' + color('[Scanning page] ', c='M') + color(url, c='W'))

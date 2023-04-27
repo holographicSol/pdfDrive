@@ -89,67 +89,119 @@ def play():
         time.sleep(1)
 
 
-def download_file(url: str, fname: str):
+def download_file(_url: str, _filename: str, _timeout=86400, _chunk_size=8192,
+                  _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
+                  _log=False, _headers='random') -> bool:
+    """
+    URL: Specify url.
+
+    FILENAME: Specify the PATH/FILENAME to save the download as.
+
+    TIMEOUT: Specify how long to wait during connection issues etc. before closing the connection. (Default 24h).
+
+    CHUNK SIZE: Specify size of each chunk to read/write from the stream. (Default 8192).
+
+    CLEAR CONSOLE LINE: Specify how many characters to clear from the console when displaying download progress.
+                        (Download progress on one line). (Default 50 characters for small displays).
+
+    CHUNK ENCODED RESPONSE: Bool. Must be true or false. (Default false)
+
+    MINIMUM FILE SIZE: Specify expected/acceptable minimum file size of downloaded file. (Remove junk). (Default 1024).
+
+    LOG: Record what has been downloaded successfully.
+    """
 
     # use a random user agent for download stability
-    headers = {'User-Agent': str(ua.random)}
+    if _headers == 'random':
+        headers = {'User-Agent': str(ua.random)}
 
     # connect
-    with requests.get(url, stream=True, timeout=master_timeout, headers=headers) as r:
+    with requests.get(_url, stream=True, timeout=_timeout, headers=headers) as r:
         r.raise_for_status()
 
         # open a temporary file of our created filename
-        with open(fname+'.tmp', 'wb') as f:
+        with open(_filename+'.tmp', 'wb') as f:
 
             # iterate though chunks of the stream
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in r.iter_content(chunk_size=_chunk_size):
 
-                # If you have chunk encoded response uncomment if
-                # and set chunk_size parameter to None.
-                # if chunk:
+                # allow (if _chunk_encoded_response is False) or (if _chunk_encoded_response is True and chunk)
+                _allow_continue = False
+                if _chunk_encoded_response is True:
+                    if chunk:
+                        _allow_continue = True
+                elif _chunk_encoded_response is False:
+                    _allow_continue = True
 
-                # storage check:
-                total, used, free = shutil.disk_usage("./")
-                if free > 8192+1024:
+                if _allow_continue is True:
 
-                    # write the chunk to the temporary file
-                    f.write(chunk)
+                    # storage check:
+                    total, used, free = shutil.disk_usage("./")
+                    if free > _chunk_size+1024:
 
-                    # output: display download progress
-                    clear_console_line(char_limit=50)  # reduce/increase char_limit if necessary for smaller screens.
-                    print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(fname+".tmp")))}', end='\r', flush=True)
+                        # write chunk to the temporary file
+                        f.write(chunk)
 
-                else:
-                    # output: out of disk space
-                    clear_console_line(char_limit=50)  # reduce/increase char_limit if necessary for smaller screens.
-                    print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
+                        # output: display download progress
+                        print(' ' * _clear_console_line_n, end='\r', flush=True)
+                        print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(_filename+".tmp")))}', end='\r', flush=True)
 
-                    # delete temporary file if exists
-                    if os.path.exists(fname + '.tmp'):
-                        os.remove(fname + '.tmp')
-                    time.sleep(1)
+                    else:
+                        # output: out of disk space
+                        print(' ' * _clear_console_line_n, end='\r', flush=True)
+                        print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
 
-                    # exit.
-                    print('')
-                    exit(0)
+                        # delete temporary file if exists
+                        if os.path.exists(_filename + '.tmp'):
+                            os.remove(_filename + '.tmp')
+                        time.sleep(1)
+
+                        # exit.
+                        print('')
+                        exit(0)
 
     # check: does the temporary file exists
-    if os.path.exists(fname+'.tmp'):
+    if os.path.exists(_filename+'.tmp'):
 
         # check: temporary file worth keeping? (<1024 bytes would be less than 1024 characters, reduce this if needed)
         # - sometimes file exists on a different server, this software does not intentionally follow any external links,
         # - if the file is in another place then a very small file may be downloaded because ultimately the file we
         #   wanted was not present and will then be detected and deleted.
-        if os.path.getsize(fname+'.tmp') >= 1024:
+        if os.path.getsize(_filename+'.tmp') >= _min_file_size:
 
             # create final download file from temporary file
-            os.replace(fname+'.tmp', fname)
-        else:
-            print(f'{get_dt()} ' + color('[Download Failed] File is < 1024 bytes and will be removed.', c='Y'))
+            os.replace(_filename+'.tmp', _filename)
 
-    # check: clean up the temporary file if it exists.
-    if os.path.exists(fname+'.tmp'):
-        os.remove(fname+'.tmp')
+            # check: clean up the temporary file if it exists.
+            if os.path.exists(_filename+'.tmp'):
+                os.remove(_filename+'.tmp')
+
+            # display download success (does not guarantee a usable file, some checks are performed before this point)
+            if os.path.exists(_filename):
+                print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
+
+                # add book to saved list. multi-drive/system memory (continue where you left off on another disk/sys)
+                if _log is True:
+                    idx_filename = _filename.rfind('/')
+                    to_saved_list = _filename[idx_filename + 1:]
+                    if to_saved_list not in success_downloads:
+                        success_downloads.append(to_saved_list)
+                        if not os.path.exists('./books_saved.txt'):
+                            open('./books_saved.txt', 'w').close()
+                        with codecs.open('./books_saved.txt', 'a', encoding='utf8') as file_open:
+                            file_open.write(to_saved_list + '\n')
+                        file_open.close()
+
+                return True
+
+        else:
+            print(f'{get_dt()} ' + color(f'[Download Failed] File < {_min_file_size} bytes, will be removed.', c='Y'))
+
+            # check: clean up the temporary file if it exists.
+            if os.path.exists(_filename+'.tmp'):
+                os.remove(_filename+'.tmp')
+
+            return False
 
 
 def download_handler(url: str, fname: str):
@@ -166,28 +218,15 @@ def download_handler(url: str, fname: str):
 
     try:
         # download file
-        download_file(url, fname)
-
-        # display download success (does not guarantee a usable file, some checks are performed before this point)
-        if os.path.exists(fname):
-            print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
+        if download_file(_url=url, _filename=fname, _timeout=86400, _chunk_size=8192,
+                         _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
+                         _log=True) is True:
 
             # notification sound after platform check (Be compatible on Termux on Android)
             if os.name in ('nt', 'dos'):
                 if mute_default_player is False:
                     play_thread = Thread(target=play)
                     play_thread.start()
-
-        # add book to saved list for multi-drive/multi-system memory (continue where you left off on another disk/sys)
-        idx = fname.rfind('/')
-        to_saved_list = fname[idx+1:]
-        if to_saved_list not in success_downloads:
-            success_downloads.append(to_saved_list)
-            if not os.path.exists('./books_saved.txt'):
-                open('./books_saved.txt', 'w').close()
-            with codecs.open('./books_saved.txt', 'a', encoding='utf8') as fo:
-                fo.write(to_saved_list + '\n')
-            fo.close()
 
     except Exception as e:
         # output: any issues
@@ -342,11 +381,9 @@ else:
                             _lib_path=lib_path)
                 print('')
             else:
-                if i >= 1:
-                    i -= 1
-                    time.sleep(10)
-                    allow_grand_library = False
-                    allow_grand_library_1 = False
+                print(f'{get_dt()} ' + '[MAX_PAGE] Possibly reached max page.')
+                i = _max_page
+
         else:
             print(f'{get_dt()} [Skipping Page] {i}')
 
