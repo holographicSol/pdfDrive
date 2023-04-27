@@ -98,66 +98,6 @@ def play():
         time.sleep(1)
 
 
-def get_soup(body):
-    """ return soup """
-    return BeautifulSoup(body, 'html.parser')
-
-
-def parse_soup_phase_one(soup):
-    """ parse soup from phase one (parse for book URLs) """
-    book_urls = []
-    for link in soup.find_all('a'):
-        href = (link.get('href'))
-        if str(href).endswith('.html'):
-            if 'auth/login' not in str(href):
-                if 'home/setLocal' not in str(href):
-                    book_link = 'https://www.pdfdrive.com/' + str(href)
-                    if book_link not in book_urls:
-                        book_urls.append(book_link)
-    return book_urls
-
-
-def parse_soup_phase_two(soup):
-    """ parse soup from phase two (parse book URLs (found in phase one) for a specific tag) """
-    book_urls = []
-    data_preview = ''
-    for link in soup.find_all('button'):
-        data_preview = link.get('data-preview')
-        if data_preview is not None:
-            data_preview = data_preview
-            break
-    if data_preview:
-        """ create final book download links using data_preview value """
-        data_preview = data_preview.replace('/ebook/preview?id=', '').replace('&session=', ' ')
-        data_preview = data_preview.split(' ')
-        data_id = data_preview[0]
-        h_id = data_preview[1]
-        book_urls.append(f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf')
-    return book_urls
-
-
-async def scrape_pages(url):
-    """ scrape for book URLs """
-    headers = {'User-Agent': str(ua.random)}
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as resp:
-            body = await resp.text()
-            soup = await asyncio.to_thread(get_soup, body)
-            book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
-            return book_urls
-
-
-async def enumerate_links(url: str):
-    """ scrape for book download links """
-    headers = {'User-Agent': str(ua.random)}
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as resp:
-            body = await resp.text(encoding=None, errors='ignore')
-            soup = await asyncio.to_thread(get_soup, body)
-            book_urls = await asyncio.to_thread(parse_soup_phase_two, soup)
-            return book_urls
-
-
 def make_file_name(book_url: str) -> str:
     """ create filenames from book URLs """
     book_url = book_url.replace('https://www.pdfdrive.com//', '')
@@ -283,6 +223,68 @@ def download_file(_url: str, _filename: str, _timeout=86400, _chunk_size=8192,
             return False
 
 
+def get_soup(body):
+    """ return soup """
+    return BeautifulSoup(body, 'html.parser')
+
+
+def parse_soup_phase_one(soup):
+    """ parse soup from phase one (parse for book URLs) """
+    book_urls = []
+    for link in soup.find_all('a'):
+        href = (link.get('href'))
+        if str(href).endswith('.html'):
+            if 'auth/login' not in str(href):
+                if 'home/setLocal' not in str(href):
+                    book_link = 'https://www.pdfdrive.com/' + str(href)
+                    if book_link not in book_urls:
+                        book_urls.append(book_link)
+    return book_urls
+
+
+def parse_soup_phase_two(soup):
+    """ parse soup from phase two (parse book URLs (found in phase one) for a specific tag) """
+    data_preview = ''
+    for link in soup.find_all('button'):
+        data_preview = link.get('data-preview')
+        if data_preview is not None:
+            data_preview = data_preview
+            break
+    if data_preview:
+        """ create final book download links using data_preview value """
+        data_preview = data_preview.replace('/ebook/preview?id=', '').replace('&session=', ' ')
+        data_preview = data_preview.split(' ')
+        data_id = data_preview[0]
+        h_id = data_preview[1]
+        return f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
+
+
+async def scrape_pages(url):
+    """ scrape for book URLs """
+    headers = {'User-Agent': str(ua.random)}
+    async with aiohttp.ClientSession(headers=headers) as session:
+        async with session.get(url) as resp:
+            body = await resp.text()
+            soup = await asyncio.to_thread(get_soup, body)
+            book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
+            print(book_urls)
+            return book_urls
+
+
+async def enumerate_links(url: str):
+    """ scrape for book download links """
+    headers = {'User-Agent': str(ua.random)}
+    book_urls = []
+    async with aiohttp.ClientSession(headers=headers) as session:
+        async with session.get(url) as resp:
+            body = await resp.text(encoding=None, errors='ignore')
+            soup = await asyncio.to_thread(get_soup, body)
+            if soup:
+                data = await asyncio.to_thread(parse_soup_phase_two, soup)
+                book_urls.append([url, data])
+    return book_urls
+
+
 async def main():
     global success_downloads, failed_downloads
     global lib_path, _search_q, exact_match, i_page, _max_page
@@ -323,28 +325,27 @@ async def main():
         print(f'{get_dt()} ' + color('[Enumerated Results] ', c='LC') + f'{len(enumerated_results)}')
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
-        # Check: Ensure results == enumerated_results so that filenames from URLs and download links should align
-        if len(results) == len(enumerated_results):
+        # Synchronously (for now) attempt to download each book on the current page.
+        i_progress = 0
+        for enumerated_result in enumerated_results:
+            print('_' * 28)
+            print('')
+            print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(enumerated_results)} ({current_page}/{_max_page})"), c="W")}')
+            print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
 
-            # Synchronously (for now) attempt to download each book on the current page.
-            i_progress = 0
-            for enumerated_result in enumerated_results:
-                print('_' * 28)
-                print('')
-                print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(enumerated_results)} ({current_page}/{_max_page})"), c="W")}')
-                print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
+            if enumerated_result[0] is not None and enumerated_result[1] is not None:
 
                 # Check: Library category directory exists
                 if not os.path.exists(lib_path + '/' + _search_q):
                     os.makedirs(lib_path + '/' + _search_q, exist_ok=True)
 
                 # Make filename from URL
-                filename = make_file_name(book_url=results[i_progress])
+                filename = make_file_name(book_url=enumerated_result[0])
                 fname = lib_path + '/' + _search_q + '/' + filename
 
                 # Output: Filename and download link
                 print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
-                print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result), c='M'))
+                print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result[1]), c='M'))
 
                 if not os.path.exists(fname):
 
@@ -352,7 +353,7 @@ async def main():
                     if fname not in success_downloads:
                         try:
                             # Download file
-                            if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
+                            if download_file(_url=enumerated_result[1], _filename=fname, _timeout=86400, _chunk_size=8192,
                                              _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
                                              _log=True) is True:
 
@@ -377,10 +378,6 @@ async def main():
                     print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File already exists in filesystem.', c='W'))
 
                 i_progress += 1
-
-        else:
-            print(f'{get_dt()} ' + color('[WARNING] ', c='Y') + color('Skipping page due to list misalignment.', c='W'))
-            time.sleep(3)
 
         grand_library_supremo.display_grand_library()
 
