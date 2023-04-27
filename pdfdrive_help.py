@@ -1,7 +1,7 @@
 
 def display_help():
     print('')
-    print('PDFDrive Downloader')
+    print('Grand Library Supremo')
     print('')
     print('-k         Keyword       Specify a search string.')
     print('-e         Exact Match   Enable a strict results filter. Default is off.')
