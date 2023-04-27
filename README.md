@@ -1,4 +1,4 @@
-    PDFDrive Downloader
+    Grand Library Supremo (PDFDrive Downloader)
     
     -k         Keyword       Specify a search string.
     -e         Exact Match   Enable a strict results filter. Default is off.
@@ -72,20 +72,20 @@ Linux:
 
 Simple Example:
 
-    pdfDrive -k big pharma
+    async_grand_library_supremo -k big pharma
 
 Set a start page to save time:
 
-    pdfDrive -p 2 -k big pharma
+    async_grand_library_supremo -p 2 -k big pharma
 
 Set start page and library path:
 
-    pdfDrive -p 2 -P "D:\Books" -k encyclopedia
+    async_grand_library_supremo -p 2 -P "D:\Books" -k encyclopedia
 
 Set start page, library path and use exact match argument for a more strict results filter:
 
-    pdfDrive -p 2 -P "D:\Books" -e -k encyclopedia
+    async_grand_library_supremo -p 2 -P "D:\Books" -e -k encyclopedia
 
 Download with amnesia to previously downloaded files (a file exists check will still be performed):
 
-    pdfDrive --no-mem -p 2 -P "D:\Books" -e -k encyclopedia
+    async_grand_library_supremo --no-mem -p 2 -P "D:\Books" -e -k encyclopedia
