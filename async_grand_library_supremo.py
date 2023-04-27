@@ -118,7 +118,7 @@ def parse_soup_phase_one(soup):
 
 
 def parse_soup_phase_two(soup):
-    """ parse soup from phase two (parse book URls (found in phase one) for a specific tag) """
+    """ parse soup from phase two (parse book URLs (found in phase one) for a specific tag) """
     book_urls = []
     data_preview = ''
     for link in soup.find_all('button'):
