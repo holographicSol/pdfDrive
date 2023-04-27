@@ -9,6 +9,10 @@ from bs4 import BeautifulSoup
 import datetime
 from fake_useragent import UserAgent
 import colorama
+import asyncio
+import aiohttp
+import html5lib
+from bs4 import BeautifulSoup
 
 colorama.init()
 master_timeout = 120
@@ -44,15 +48,19 @@ def get_dt() -> str:
     return color(str('[' + str(datetime.datetime.now()) + ']'), c='W')
 
 
+async def get_site_content(_url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(_url) as resp:
+            text = await resp.read()
+
+    return BeautifulSoup(text.decode('utf-8'), 'html5lib')
+
+
 def get_pages(search_q: str) -> str:
 
     max_page = 0
-
-    # crawl the page for pages
-    headers = {'User-Agent': str(ua.random)}
-    rHead = requests.get('https://www.pdfdrive.com/search?q=' + search_q, headers=headers, timeout=master_timeout)
-    data = rHead.text
-    soup = BeautifulSoup(data, "lxml")
+    loop = asyncio.get_event_loop()
+    soup = loop.run_until_complete(get_site_content('https://www.pdfdrive.com/search?q=' + search_q))
 
     # parse the html soup for references to page
     for link in soup.find_all('a'):
@@ -80,11 +88,8 @@ def get_link(url: str) -> list:
     book_urls = []
 
     try:
-        # crawl the search page
-        headers = {'User-Agent': str(ua.random)}
-        rHead = requests.get(url, headers=headers, timeout=master_timeout)
-        data = rHead.text
-        soup = BeautifulSoup(data, "lxml")
+        loop = asyncio.get_event_loop()
+        soup = loop.run_until_complete(get_site_content(url))
 
         # parse the html soup for book links
         for link in soup.find_all('a'):
@@ -133,13 +138,9 @@ def get_page_links(search_q: str, page: str, exact_match: bool) -> list:
 def enumerate_download_link(url: str) -> str:
 
     returned_url = ''
-
     try:
-        # crawl the page
-        headers = {'User-Agent': str(ua.random)}
-        rHead = requests.get(url, headers=headers, timeout=master_timeout)
-        data = rHead.text
-        soup = BeautifulSoup(data, "lxml")
+        loop = asyncio.get_event_loop()
+        soup = loop.run_until_complete(get_site_content(url))
 
         # parse the soup for a specific html tag that we can use to create the final download link before having seen
         # the final download link (pdf-drive currently has a time wait on the final download page, no need to wait)
