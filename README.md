@@ -35,7 +35,12 @@ Notes:
         2. library_manager --enumerate-library
         3. copy the new books_saved.txt to pdfDrive loacation.
 
-    Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query. 
+    Any argument other than search query (-k) should be stated before -k as anything after -k will will treated as a query.
+
+    Speed Increase:
+    Some operations are now async however I would not like to async everything just yet in case we get blocked/timedout
+    which will slow us down.
+
 
 Windows:
 
