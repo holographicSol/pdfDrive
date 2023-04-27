@@ -20,7 +20,7 @@ import sys
 colorama.init()
 
 # modify socket module timeout
-master_timeout = 86400  # 24h
+master_timeout = 86400.0  # 24h
 socket.setdefaulttimeout(master_timeout)
 
 # initialize fake user agant
@@ -32,6 +32,17 @@ exact_match = False
 lib_path = './library/'
 success_downloads = []
 failed_downloads = []
+
+my_timeout = aiohttp.ClientTimeout(
+    total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
+    sock_connect=86400,  # How long to wait before an open socket allowed to connect
+    sock_read=86400 #  How long to wait with no data being read before timing out
+)
+
+client_args = dict(
+    trust_env=True,
+    timeout=my_timeout
+)
 
 # Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
 if os.name in ('nt', 'dos'):
@@ -261,27 +272,41 @@ def parse_soup_phase_two(soup):
 
 async def scrape_pages(url):
     """ scrape for book URLs """
-    headers = {'User-Agent': str(ua.random)}
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as resp:
-            body = await resp.text()
-            soup = await asyncio.to_thread(get_soup, body)
-            book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
-            return book_urls
+    timeout_retry = 2
+    book_urls = []
+    try:
+        headers = {'User-Agent': str(ua.random)}
+        async with aiohttp.ClientSession(headers=headers, **client_args) as session:
+            async with session.get(url) as resp:
+                body = await resp.text()
+                soup = await asyncio.to_thread(get_soup, body)
+                book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
+    except asyncio.exceptions.TimeoutError:
+        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='LC') + f'Initial scraper timeout. Retrying in {timeout_retry} seconds.')
+        await asyncio.sleep(timeout_retry)
+        await scrape_pages(url)
+    return book_urls
 
 
 async def enumerate_links(url: str):
     """ scrape for book download links """
+    timeout_retry = 2
     headers = {'User-Agent': str(ua.random)}
     book_urls = []
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as resp:
-            body = await resp.text(encoding=None, errors='ignore')
-            soup = await asyncio.to_thread(get_soup, body)
-            if soup:
-                data = await asyncio.to_thread(parse_soup_phase_two, soup)
-                # append together for list alignment later (when creating filenames for current download link)
-                book_urls.append([url, data])
+    try:
+        async with aiohttp.ClientSession(headers=headers, **client_args) as session:
+            async with session.get(url) as resp:
+                body = await resp.text(encoding=None, errors='ignore')
+                soup = await asyncio.to_thread(get_soup, body)
+                if soup:
+                    data = await asyncio.to_thread(parse_soup_phase_two, soup)
+                    # append together for list alignment later (when creating filenames for current download link)
+                    book_urls.append([url, data])
+    except asyncio.exceptions.TimeoutError:
+        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='LC') + f'Enumeration timeout. Retrying in {timeout_retry} seconds.')
+        await asyncio.sleep(timeout_retry)
+        await enumerate_links(url)
+
     return book_urls
 
 
