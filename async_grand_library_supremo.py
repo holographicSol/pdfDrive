@@ -1,7 +1,8 @@
+""" Written by Benjamin Jack Cullen """
+
 import os
 import asyncio
 import time
-import handler_chunk
 import aiohttp
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
@@ -12,7 +13,7 @@ import codecs
 import requests
 import grand_library_supremo
 import shutil
-import pdfdrive_help
+import grand_library_supremo_help
 import sys
 
 colorama.init()
@@ -364,7 +365,7 @@ async def main():
 
 stdin = list(sys.argv)
 if '-h' in stdin:
-    pdfdrive_help.display_help()
+    grand_library_supremo_help.display_help()
 
 else:
     grand_library_supremo.display_grand_library()
