@@ -336,8 +336,6 @@ async def main():
         print(f'{get_dt()} ' + color('[Results] ', c='LC') + f'{len(results)}')
         print(f'{get_dt()} ' + color('[Phase One Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
-        print('')
-
         # Phase Two: Setup async scaper to get book download links for each book on the current page
         print(f'{get_dt()} ' + color('[Phase Two] ', c='LC') + f'Enumerating Links...')
         t0 = time.perf_counter()
