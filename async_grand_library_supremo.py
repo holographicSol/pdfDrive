@@ -28,6 +28,8 @@ ua = UserAgent()
 
 i_page = 1
 _max_page = 88
+timeout_retry = 2
+connection_error_retry = 10
 exact_match = False
 lib_path = './library/'
 success_downloads = []
@@ -272,7 +274,6 @@ def parse_soup_phase_two(soup):
 
 async def scrape_pages(url):
     """ scrape for book URLs """
-    timeout_retry = 2
     book_urls = []
     try:
         headers = {'User-Agent': str(ua.random)}
@@ -287,7 +288,7 @@ async def scrape_pages(url):
         await scrape_pages(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Initial scraper connection error. Retrying in {timeout_retry} seconds.')
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Initial scraper connection error. Retrying in {connection_error_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
@@ -296,7 +297,6 @@ async def scrape_pages(url):
 
 async def enumerate_links(url: str):
     """ scrape for book download links """
-    timeout_retry = 2
     headers = {'User-Agent': str(ua.random)}
     book_urls = []
     try:
@@ -314,7 +314,7 @@ async def enumerate_links(url: str):
         await enumerate_links(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Enumeration connection error. Retrying in {timeout_retry} seconds.')
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Enumeration connection error. Retrying in {connection_error_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
