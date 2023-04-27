@@ -16,18 +16,23 @@ import shutil
 import grand_library_supremo_help
 import sys
 
+# colorama requires initialization before use
 colorama.init()
+
+# modify socket module timeout
 master_timeout = 86400  # 24h
-ua = UserAgent()
 socket.setdefaulttimeout(master_timeout)
-success_downloads = []
-failed_downloads = []
-lib_path = './library/'
-exact_match = False
+
+# initialize fake user agant
+ua = UserAgent()
+
 i_page = 1
 _max_page = 88
+exact_match = False
+lib_path = './library/'
+success_downloads = []
+failed_downloads = []
 
-# Notification of New Media
 # Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
 if os.name in ('nt', 'dos'):
     try:
@@ -94,10 +99,12 @@ def play():
 
 
 def get_soup(body):
+    """ return soup """
     return BeautifulSoup(body, 'html.parser')
 
 
 def parse_soup_phase_one(soup):
+    """ parse soup from phase one (parse for book URLs) """
     book_urls = []
     for link in soup.find_all('a'):
         href = (link.get('href'))
@@ -111,6 +118,7 @@ def parse_soup_phase_one(soup):
 
 
 def parse_soup_phase_two(soup):
+    """ parse soup from phase two (parse book URls (found in phase one) for a specific tag) """
     book_urls = []
     data_preview = ''
     for link in soup.find_all('button'):
@@ -119,6 +127,7 @@ def parse_soup_phase_two(soup):
             data_preview = data_preview
             break
     if data_preview:
+        """ create final book download links using data_preview value """
         data_preview = data_preview.replace('/ebook/preview?id=', '').replace('&session=', ' ')
         data_preview = data_preview.split(' ')
         data_id = data_preview[0]
@@ -128,6 +137,7 @@ def parse_soup_phase_two(soup):
 
 
 async def scrape_pages(url):
+    """ scape for book URLs """
     headers = {'User-Agent': str(ua.random)}
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as resp:
@@ -138,6 +148,7 @@ async def scrape_pages(url):
 
 
 async def enumerate_links(url: str):
+    """ scape for book download links """
     headers = {'User-Agent': str(ua.random)}
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as resp:
@@ -148,6 +159,7 @@ async def enumerate_links(url: str):
 
 
 def make_file_name(book_url: str) -> str:
+    """ create filenames from book URLs """
     book_url = book_url.replace('https://www.pdfdrive.com//', '')
     idx = book_url.rfind('-')
     book_url = book_url[:idx]
@@ -275,15 +287,16 @@ async def main():
     global success_downloads, failed_downloads
     global lib_path, _search_q, exact_match, i_page, _max_page
 
+    # create the first URL to scrape using query and exact match bool
     url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+'))
     if exact_match is True:
         url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page='+str(i_page))
     url = url + '&pagecount=&pubyear=&searchin=&page='
 
+    # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     print(f'{get_dt()} ' + color('[Phase One] ', c='LC') + f'Gathering initial links...')
     for current_page in range(i_page, _max_page):
         tasks = []
-
         t0 = time.perf_counter()
         url = url+str(current_page)
         task = asyncio.create_task(scrape_pages(url))
@@ -298,6 +311,7 @@ async def main():
 
         print('')
 
+        # Phase Two: Setup async scaper to get book download links for each book on the current page
         print(f'{get_dt()} ' + color('[Phase Two] ', c='LC') + f'Enumerating Links...')
         t0 = time.perf_counter()
         tasks = []
@@ -309,9 +323,10 @@ async def main():
         print(f'{get_dt()} ' + color('[Enumerated Results] ', c='LC') + f'{len(enumerated_results)}')
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
+        # Check: Ensure results == enumerated_results so that filenames from URLs and download links should align
         if len(results) == len(enumerated_results):
 
-            # download
+            # Synchronously (for now) attempt to download each book on the current page.
             i_progress = 0
             for enumerated_result in enumerated_results:
                 print('_' * 28)
@@ -319,40 +334,41 @@ async def main():
                 print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(enumerated_results)} ({current_page}/{_max_page})"), c="W")}')
                 print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
 
-                # check: library category directory exists
+                # Check: Library category directory exists
                 if not os.path.exists(lib_path + '/' + _search_q):
                     os.makedirs(lib_path + '/' + _search_q, exist_ok=True)
 
-                # make filename
+                # Make filename from URL
                 filename = make_file_name(book_url=results[i_progress])
                 fname = lib_path + '/' + _search_q + '/' + filename
 
-                # output: filename and URL
+                # Output: Filename and download link
                 print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
                 print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result), c='M'))
 
                 if not os.path.exists(fname):
 
-                    # check: filename exists in books_saved.txt
+                    # Check: Filename exists in books_saved.txt
                     if fname not in success_downloads:
                         try:
-                            # download file
+                            # Download file
                             if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
                                              _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
                                              _log=True) is True:
 
-                                # notification sound after platform check (Be compatible on Termux on Android)
+                                # Notification sound after platform check (Be compatible on Termux on Android)
                                 if os.name in ('nt', 'dos'):
                                     if mute_default_player is False:
                                         play_thread = Thread(target=play)
                                         play_thread.start()
 
                         except Exception as e:
-                            # output: any issues
+
+                            # Output: any issues
                             print(f'{get_dt()} [Exception.download] {e}')
                             print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
 
-                            # remove the file if it was created to clean up after ourselves
+                            # Remove the file if it was created to clean up after ourselves
                             if os.path.exists(fname):
                                 os.remove(fname)
                     else:
@@ -369,10 +385,10 @@ async def main():
         grand_library_supremo.display_grand_library()
 
 
+# Get STDIN and parse
 stdin = list(sys.argv)
 if '-h' in stdin:
     grand_library_supremo_help.display_help()
-
 else:
     grand_library_supremo.display_grand_library()
 
