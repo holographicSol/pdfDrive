@@ -283,12 +283,12 @@ async def scrape_pages(url):
                 soup = await asyncio.to_thread(get_soup, body)
                 book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
     except asyncio.exceptions.TimeoutError:
-        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='LC') + f'Initial scraper timeout. Retrying in {timeout_retry} seconds.')
+        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='Y') + f'Initial scraper timeout. Retrying in {timeout_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await scrape_pages(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Initial scraper connection error. Retrying in {connection_error_retry} seconds.')
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='Y') + f'Initial scraper connection error. Retrying in {connection_error_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
@@ -309,12 +309,12 @@ async def enumerate_links(url: str):
                     # append together for list alignment later (when creating filenames for current download link)
                     book_urls.append([url, data])
     except asyncio.exceptions.TimeoutError:
-        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='LC') + f'Enumeration timeout. Retrying in {timeout_retry} seconds.')
+        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='Y') + f'Enumeration timeout. Retrying in {timeout_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='LC') + f'Enumeration connection error. Retrying in {connection_error_retry} seconds.')
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='Y') + f'Enumeration connection error. Retrying in {connection_error_retry} seconds.')
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
