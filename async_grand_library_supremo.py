@@ -313,7 +313,7 @@ async def main():
         for enumerated_result in enumerated_results:
             print('_' * 28)
             print('')
-            print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(enumerated_results)}"), c="W")}')
+            print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(results)}"), c="W")}')
             print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
 
             # check: library category directory exists
