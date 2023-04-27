@@ -55,6 +55,11 @@ Termux for low-power/portability operation:
     4. python ./pdfDrive.py -h
 
 
+Executable:
+
+    https://drive.google.com/drive/folders/1Vs96-lEA9_DKl_GdyFbKI9yN6Bhka_0s?usp=share_link
+
+
 Linux:
 
     * Use steps from Termux ^.
