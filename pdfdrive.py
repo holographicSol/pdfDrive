@@ -245,7 +245,7 @@ async def download_file(dyn_download_args):
                         if dyn_download_args.filename in lines:
                             print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Successfully appended {dyn_download_args.filename} to books_saved.txt', c='LC'))
                         else:
-                            print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Failed to append {dyn_download_args.filename} to books_saved.txt', c='LC'))
+                            print(f'{get_dt()} ' + color('[File] ', c='R') + color(f'Failed to append {dyn_download_args.filename} to books_saved.txt', c='LC'))
 
                 return True
 
@@ -254,7 +254,7 @@ async def download_file(dyn_download_args):
                     print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Issue replacing {dyn_download_args.filepath}.tmp', c='LC'))
 
         else:
-            print(f'{get_dt()} ' + color(f'[Download Failed] ', c='Y') + str('External link may be required to download this file.'))
+            print(f'{get_dt()} ' + color(f'[Download Failed] ', c='R') + str('External link may be required to download this file.'))
 
             # add books base url to failed only if file < 1024. (external link filter)
             if dyn_download_args.log is True:
@@ -275,7 +275,7 @@ async def download_file(dyn_download_args):
                     if dyn_download_args.url[0] in lines:
                         print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Successfully appended {dyn_download_args.url[0]} to books_failed.txt', c='LC'))
                     else:
-                        print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Failed to append {dyn_download_args.url[0]} to books_failed.txt', c='LC'))
+                        print(f'{get_dt()} ' + color('[File] ', c='R') + color(f'Failed to append {dyn_download_args.url[0]} to books_failed.txt', c='LC'))
 
             # check: clean up the temporary file if it exists.
             if os.path.exists(dyn_download_args.filename+'.tmp'):
@@ -286,7 +286,7 @@ async def download_file(dyn_download_args):
                 if not os.path.exists(dyn_download_args.filename+'.tmp'):
                     print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Successfully removed {dyn_download_args.filepath}', c='LC'))
                 else:
-                    print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Failed to remove {dyn_download_args.filepath}', c='LC'))
+                    print(f'{get_dt()} ' + color('[File] ', c='R') + color(f'Failed to remove {dyn_download_args.filepath}', c='LC'))
 
             return False
 
