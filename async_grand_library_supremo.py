@@ -211,7 +211,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
                     to_saved_list = _filename[idx_filename + 1:]
                     if to_saved_list not in success_downloads:
                         success_downloads.append(to_saved_list)
-                        async with aiofiles.open('./books_saved.txt' + '.tmp', mode='a+') as handle:
+                        async with aiofiles.open('./books_saved.txt', mode='a+') as handle:
                             await handle.write(to_saved_list + '\n')
                         await handle.close()
 
