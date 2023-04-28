@@ -398,8 +398,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
                 filepath = lib_path + '/' + _search_q + '/' + filename
 
                 # Output: Filename and download link
-                print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
-                print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result[1]), c='M'))
+                print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='W'))
+                print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result[1]), c='W'))
 
                 # Check: Filename exists in filesystem save location
                 if not os.path.exists(filepath):
