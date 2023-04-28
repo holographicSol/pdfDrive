@@ -327,9 +327,8 @@ async def enumerate_links(url: str):
     return book_urls
 
 
-async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./', _success_downloads=None,
+async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./library/', _success_downloads=None,
                _failed_downloads=None):
-    # global lib_path, _search_q, exact_match, i_page, _max_page
 
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     if _success_downloads is None:
@@ -396,17 +395,17 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
 
                 # Make filename from URL
                 filename = make_file_name(_book_url=enumerated_result[0])
-                fname = lib_path + '/' + _search_q + '/' + filename
+                filepath = lib_path + '/' + _search_q + '/' + filename
 
                 # Output: Filename and download link
                 print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
                 print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result[1]), c='M'))
 
                 # Check: Filename exists in filesystem save location
-                if not os.path.exists(fname):
+                if not os.path.exists(filepath):
 
                     # Check: Filename exists in books_saved.txt
-                    if fname not in success_downloads:
+                    if filepath not in success_downloads:
 
                         # Check: Base URL not in failed downloads (failed downloads are specifically < 1024b files)
                         if enumerated_result[0] not in failed_downloads:
@@ -414,7 +413,7 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
                                 # Download file
                                 dyn_download_args = DownloadArgs(url=enumerated_result,
                                                                  filename=filename,
-                                                                 filepath=_lib_path,
+                                                                 filepath=filepath,
                                                                  chunk_size=8192,
                                                                  clear_n_chars=50,
                                                                  min_file_size=1024,
