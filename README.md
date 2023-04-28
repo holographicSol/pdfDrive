@@ -48,7 +48,7 @@ Windows:
     1. git clone https://github.com/holographicSol/pdfDrive
     2. cd ./pdfDrive
     3. ./requirements.bat
-    4. python ./pdfDrive.py -h
+    4. python ./pdfdrive.py -h
 
 Termux for low-power/portability operation:
 
@@ -57,7 +57,7 @@ Termux for low-power/portability operation:
     1. git clone https://github.com/holographicSol/pdfDrive
     2. cd ./pdfDrive
     3. ./requirements.sh
-    4. python ./pdfDrive.py -h
+    4. python ./pdfdrive.py -h
 
 
 Executable:
@@ -72,20 +72,20 @@ Linux:
 
 Simple Example:
 
-    async_grand_library_supremo -k big pharma
+    pdfdrive -k big pharma
 
 Set a start page to save time:
 
-    async_grand_library_supremo -p 2 -k big pharma
+    pdfdrive -p 2 -k big pharma
 
 Set start page and library path:
 
-    async_grand_library_supremo -p 2 -P "D:\Books" -k encyclopedia
+    pdfdrive -p 2 -P "D:\Books" -k encyclopedia
 
 Set start page, library path and use exact match argument for a more strict results filter:
 
-    async_grand_library_supremo -p 2 -P "D:\Books" -e -k encyclopedia
+    pdfdrive -p 2 -P "D:\Books" -e -k encyclopedia
 
 Download with amnesia to previously downloaded files (a file exists check will still be performed):
 
-    async_grand_library_supremo --no-mem -p 2 -P "D:\Books" -e -k encyclopedia
+    pdfdrive --no-mem -p 2 -P "D:\Books" -e -k encyclopedia
