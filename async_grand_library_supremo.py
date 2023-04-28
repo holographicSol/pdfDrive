@@ -440,11 +440,11 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
                                 print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
 
                                 # Remove the file if it was created to clean up after ourselves
-                                if os.path.exists(fname):
-                                    os.remove(fname)
+                                if os.path.exists(filepath):
+                                    os.remove(filepath)
                                 # check: clean up the temporary file if it exists.
-                                if os.path.exists(fname + '.tmp'):
-                                    os.remove(fname + '.tmp')
+                                if os.path.exists(filepath + '.tmp'):
+                                    os.remove(filepath + '.tmp')
                         else:
                             print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in failed downloads, may require an external link to download.', c='W'))
                     else:
