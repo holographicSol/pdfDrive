@@ -415,31 +415,37 @@ async def main():
                 print(f'{get_dt()} ' + color('[Book] ', c='LC') + color(str(filename), c='M'))
                 print(f'{get_dt()} ' + color('[URL] ', c='LC') + color(str(enumerated_result[1]), c='M'))
 
+                # Check: Filename exists in filesystem save location
                 if not os.path.exists(fname):
 
                     # Check: Filename exists in books_saved.txt
                     if fname not in success_downloads:
-                        try:
-                            # Download file
-                            if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
-                                             _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
-                                             _log=True) is True:
 
-                                # Notification sound after platform check (Be compatible on Termux on Android)
-                                if os.name in ('nt', 'dos'):
-                                    if mute_default_player is False:
-                                        play_thread = Thread(target=play)
-                                        play_thread.start()
+                        # Check: Base URL not in failed downloads (failed downloads are specifically < 1024b files)
+                        if enumerated_result[0] not in failed_downloads:
+                            try:
+                                # Download file
+                                if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
+                                                 _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
+                                                 _log=True) is True:
 
-                        except Exception as e:
+                                    # Notification sound after platform check (Be compatible on Termux on Android)
+                                    if os.name in ('nt', 'dos'):
+                                        if mute_default_player is False:
+                                            play_thread = Thread(target=play)
+                                            play_thread.start()
 
-                            # Output: any issues
-                            print(f'{get_dt()} [Exception.download] {e}')
-                            print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+                            except Exception as e:
 
-                            # Remove the file if it was created to clean up after ourselves
-                            if os.path.exists(fname):
-                                os.remove(fname)
+                                # Output: any issues
+                                print(f'{get_dt()} [Exception.download] {e}')
+                                print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
+
+                                # Remove the file if it was created to clean up after ourselves
+                                if os.path.exists(fname):
+                                    os.remove(fname)
+                        else:
+                            print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in failed downloads, may require an external link to download.', c='W'))
                     else:
                         print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in records.', c='W'))
                 else:
