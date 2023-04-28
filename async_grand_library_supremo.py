@@ -242,7 +242,7 @@ def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
                 if not os.path.exists('./books_failed.txt'):
                     open('./books_failed.txt', 'w').close()
                 with codecs.open('./books_failed.txt', 'a', encoding='utf8') as file_open:
-                    file_open.write(_url[0] + '\n')
+                    file_open.write(str(_url[0]) + '\n')
                 file_open.close()
 
             # check: clean up the temporary file if it exists.
@@ -349,7 +349,7 @@ async def main():
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     for current_page in range(i_page, _max_page):
 
-        # create the first URL to scrape using query and exact match bool
+        # create URL to scrape using query and exact match bool
         url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+'))
         if exact_match is True:
             url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page=' + str(i_page))
