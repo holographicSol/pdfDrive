@@ -45,7 +45,7 @@ socket.setdefaulttimeout(master_timeout)
 # initialize fake user agant
 def user_agent():
     ua = UserAgent()
-    return ua.random
+    return {'User-Agent': str(ua.random)}
 
 
 i_page = 1
@@ -163,7 +163,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
 
     # use a random user agent for download stability
     if _headers == 'random':
-        _headers = {'User-Agent': str(user_agent())}
+        _headers = user_agent()
 
     async with aiohttp.ClientSession(headers=_headers, **client_args_download) as session:
         async with session.get(_url[1]) as resp:
@@ -285,8 +285,8 @@ async def scrape_pages(url):
     """ scrape for book URLs """
     book_urls = []
     try:
-        headers = {'User-Agent': str(user_agent())}
-        async with aiohttp.ClientSession(headers=headers, **client_args) as session:
+        _headers = user_agent()
+        async with aiohttp.ClientSession(headers=_headers, **client_args) as session:
             async with session.get(url) as resp:
                 body = await resp.text(encoding=None, errors='ignore')
                 soup = await asyncio.to_thread(get_soup, body)
@@ -310,8 +310,8 @@ async def enumerate_links(url: str):
     """ scrape for book download links """
     book_urls = []
     try:
-        headers = {'User-Agent': str(user_agent())}
-        async with aiohttp.ClientSession(headers=headers, **client_args) as session:
+        _headers = user_agent()
+        async with aiohttp.ClientSession(headers=_headers, **client_args) as session:
             async with session.get(url) as resp:
                 body = await resp.text(encoding=None, errors='ignore')
                 soup = await asyncio.to_thread(get_soup, body)
