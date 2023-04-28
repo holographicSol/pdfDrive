@@ -223,7 +223,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
             # add books base url to failed only if file < 1024. (external link filter)
             if _url[0] not in failed_downloads:
                 failed_downloads.append(_url[0])
-                async with aiofiles.open('./books_failed.txt' + '.tmp', mode='a+') as handle:
+                async with aiofiles.open('./books_failed.txt', mode='a+') as handle:
                     await handle.write(str(_url[0]) + '\n')
                 await handle.close()
 
