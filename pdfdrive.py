@@ -55,6 +55,7 @@ class DownloadArgs:
     log: bool
     success_downloads: list
     failed_downloads: list
+    ds_bytes: bool
 
 
 # set master timeout
@@ -159,6 +160,7 @@ async def download_file(dyn_download_args):
         async with session.get(dyn_download_args.url[1]) as resp:
             if resp.status == 200:
 
+                _sz = int(0)
                 async with aiofiles.open(dyn_download_args.filepath+'.tmp', mode='wb') as handle:
                     async for chunk in resp.content.iter_chunked(_chunk_size):
 
@@ -168,9 +170,14 @@ async def download_file(dyn_download_args):
                             # write chunk to the temporary file
                             await handle.write(chunk)
 
+
                             # output: display download progress
+                            _sz += int(len(chunk))
                             print(' ' * dyn_download_args.clear_n_chars, end='\r', flush=True)
-                            print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(dyn_download_args.filepath + ".tmp")))}', end='\r', flush=True)
+                            if dyn_download_args.ds_bytes is False:
+                                print(f'[DOWNLOADING] {str(convert_bytes(_sz))}', end='\r', flush=True)
+                            else:
+                                print(f'[DOWNLOADING] {str(_sz)} bytes', end='\r', flush=True)
                         else:
                             # output: out of disk space
                             print(' ' * dyn_download_args.clear_n_chars, end='\r', flush=True)
@@ -327,7 +334,7 @@ async def enumerate_links(url: str):
 
 
 async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./library/', _success_downloads=None,
-               _failed_downloads=None):
+               _failed_downloads=None, _ds_bytes=False):
 
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     if _success_downloads is None:
@@ -418,7 +425,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
                                                                  min_file_size=1024,
                                                                  log=True,
                                                                  success_downloads=_success_downloads,
-                                                                 failed_downloads=_failed_downloads)
+                                                                 failed_downloads=_failed_downloads,
+                                                                 ds_bytes=_ds_bytes)
 
                                 dl_tasks = []
                                 dl_task = asyncio.create_task(download_file(dyn_download_args))
@@ -507,6 +515,11 @@ else:
         idx = stdin.index('-max') + 1
         max_page = int(stdin[idx])
 
+    """ Display Download Progress In Bytes """
+    ds_bytes = False
+    if '-bytes' in stdin:
+        ds_bytes = True
+
     """ Use Download Log """
     success_downloads = []
     failed_downloads = []
@@ -532,4 +545,4 @@ else:
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(_i_page=i_page, _max_page=max_page, _exact_match=exact_match, _search_q=search_q,
                                  _lib_path=lib_path, _success_downloads=success_downloads,
-                                 _failed_downloads=failed_downloads))
+                                 _failed_downloads=failed_downloads, _ds_bytes=ds_bytes))
