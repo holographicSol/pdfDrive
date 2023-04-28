@@ -359,7 +359,7 @@ async def main():
         if len(results) == int(0):
             print(f'{get_dt()} ' + color('[Max Page] ', c='LC') + f'No results were found on page {current_page}. Exiting.')
             print('\n\n')
-            exit(0)
+            break
 
         # Phase Two: Setup async scaper to get book download links for each book on the current page
         print(f'{get_dt()} ' + color('[Phase Two] ', c='LC') + f'Enumerating Links...')
