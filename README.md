@@ -110,4 +110,4 @@ Developers:
     Step 2: Download synchronously (dont get kicked) while using async read/write modules because they
     are faster at it even if synchronously applied.
 
-    Step 3: Back to step for each page.
+    Step 3: Back to step 1 for each page.
