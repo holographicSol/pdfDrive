@@ -38,7 +38,6 @@ exact_match = False
 lib_path = './library/'
 success_downloads = []
 failed_downloads = []
-external_downloads = []
 
 statuses = {x for x in range(100, 600)}
 statuses.remove(200)
@@ -150,7 +149,7 @@ def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
 
     LOG: Record what has been downloaded successfully.
     """
-    global success_downloads, failed_downloads, external_downloads
+    global success_downloads, failed_downloads
 
     # use a random user agent for download stability
     if _headers == 'random':
@@ -238,11 +237,11 @@ def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
         else:
             print(f'{get_dt()} ' + color(f'[Download Failed] File < {_min_file_size} bytes, will be removed.', c='Y'))
 
-            if _url[0] not in external_downloads:
-                external_downloads.append(_url[0])
-                if not os.path.exists('./books_external.txt'):
-                    open('./books_external.txt', 'w').close()
-                with codecs.open('./books_external.txt', 'a', encoding='utf8') as file_open:
+            if _url[0] not in failed_downloads:
+                failed_downloads.append(_url[0])
+                if not os.path.exists('./books_failed.txt'):
+                    open('./books_failed.txt', 'w').close()
+                with codecs.open('./books_failed.txt', 'a', encoding='utf8') as file_open:
                     file_open.write(_url[0] + '\n')
                 file_open.close()
 
@@ -513,15 +512,6 @@ else:
                 line = line.strip()
                 if line not in failed_downloads:
                     failed_downloads.append(line)
-        fo.close()
-        # external downloads
-        if not os.path.exists('./books_external.txt'):
-            open('./books_external.txt', 'w').close()
-        with codecs.open('./books_external.txt', 'r', encoding='utf8') as fo:
-            for line in fo:
-                line = line.strip()
-                if line not in external_downloads:
-                    external_downloads.append(line)
         fo.close()
 
     loop = asyncio.get_event_loop()
