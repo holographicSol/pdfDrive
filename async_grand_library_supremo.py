@@ -61,7 +61,13 @@ statuses = {x for x in range(100, 600)}
 statuses.remove(200)
 statuses.remove(429)
 
-my_timeout = aiohttp.ClientTimeout(
+scrape_timeout = aiohttp.ClientTimeout(
+    total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
+    sock_connect=86400,  # How long to wait before an open socket allowed to connect
+    sock_read=86400 #  How long to wait with no data being read before timing out
+)
+
+download_timeout = aiohttp.ClientTimeout(
     total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
     sock_connect=86400,  # How long to wait before an open socket allowed to connect
     sock_read=86400 #  How long to wait with no data being read before timing out
@@ -69,7 +75,12 @@ my_timeout = aiohttp.ClientTimeout(
 
 client_args = dict(
     trust_env=True,
-    timeout=my_timeout
+    timeout=scrape_timeout
+)
+
+client_args_download = dict(
+    trust_env=True,
+    timeout_retry=download_timeout
 )
 
 
@@ -154,7 +165,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
     if _headers == 'random':
         _headers = {'User-Agent': str(user_agent())}
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=_headers, **client_args_download) as session:
         async with session.get(_url[1]) as resp:
             if resp.status == 200:
 
@@ -434,6 +445,9 @@ async def main():
                                 # Remove the file if it was created to clean up after ourselves
                                 if os.path.exists(fname):
                                     os.remove(fname)
+                                # check: clean up the temporary file if it exists.
+                                if os.path.exists(fname + '.tmp'):
+                                    os.remove(fname + '.tmp')
                         else:
                             print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File exists in failed downloads, may require an external link to download.', c='W'))
                     else:
