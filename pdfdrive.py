@@ -352,8 +352,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
         url = url + '&pagecount=&pubyear=&searchin=&page='
         url = url+str(current_page)
 
-        print(f'{get_dt()} ' + color('[Scanning] ', c='LC') + f'Page: {current_page}')
-        print(f'{get_dt()} ' + color('[Page URL] ', c='LC') + f'{url}')
+        print(f'{get_dt()} ' + color('[Page] ', c='LC') + f'Page: {current_page}')
+        print(f'{get_dt()} ' + color('[Scanning] ', c='LC') + f'{url}')
         print(f'{get_dt()} ' + color('[Phase One] ', c='LC') + f'Gathering initial links...')
 
         tasks = []
