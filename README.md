@@ -93,10 +93,21 @@ Download with amnesia to previously downloaded files (a file exists check will s
 
     pdfdrive --no-mem -p 2 -P "D:\Books" -e -k encyclopedia
 
-Note:
+Extra Note:
 
     As of 28/04/23 books_saved.txt and or books_failed.txt may not be backwards compatible and should
     be deleted if experiencing encoding errors because of the new way this software handles those files.
     Any issues feel free to submit bugs.
     For new features feel free to ask.
     Download the data and enjoy.
+
+Developers:
+
+    Logic:
+
+    Step 1: Async phase one and phase two per page. (Per page limit to not get kicked from the server).
+
+    Step 2: Download synchronously (dont get kicked) while using async read/write modules because they
+    are faster at it even if synchronously applied.
+
+    Step 3: Back to step for each page.
