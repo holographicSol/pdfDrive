@@ -12,11 +12,27 @@ import datetime
 import colorama
 import socket
 import codecs
-import requests
 import grand_library_supremo
 import shutil
 import grand_library_supremo_help
 import sys
+
+# Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
+if os.name in ('nt', 'dos'):
+    try:
+        from PyQt5.QtCore import QUrl
+        from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+        from threading import Thread
+
+        # Initialize Notification Player_default In Memory
+        player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
+        player_content_default = QMediaContent(player_url_default)
+        player_default = QMediaPlayer()
+        player_default.setMedia(player_content_default)
+        player_default.setVolume(6)
+        mute_default_player = True
+    except:
+        pass
 
 # colorama requires initialization before use
 colorama.init()
@@ -55,23 +71,6 @@ client_args = dict(
     trust_env=True,
     timeout=my_timeout
 )
-
-# Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
-if os.name in ('nt', 'dos'):
-    try:
-        from PyQt5.QtCore import QUrl
-        from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-        from threading import Thread
-
-        # Initialize Notification Player_default In Memory
-        player_url_default = QUrl.fromLocalFile("./resources/sound/coin_collect.mp3")
-        player_content_default = QMediaContent(player_url_default)
-        player_default = QMediaPlayer()
-        player_default.setMedia(player_content_default)
-        player_default.setVolume(6)
-        mute_default_player = True
-    except:
-        pass
 
 
 def color(s: str, c: str) -> str:
@@ -144,7 +143,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
 
     """
     This function is currently designed to run synchronously while also having asynchronous features.
-    Make use of async read/write and aiohhttp while also not needing to make this function non blocking -
+    Make use of async read/write and aiohhttp while also not needing to make this function non-blocking -
     (This function runs one instance at a time to prevent being kicked). """
 
     global success_downloads, failed_downloads
