@@ -4,6 +4,8 @@ import os
 import asyncio
 import time
 import aiohttp
+import aiofiles
+import aiofiles.os
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import datetime
@@ -128,79 +130,61 @@ def make_file_name(book_url: str) -> str:
     return book_url
 
 
-def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
-                  _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
-                  _log=False, _headers='random') -> bool:
+def out_of_disk_space(_chunk_size):
+    total, used, free = shutil.disk_usage("./")
+    if free > _chunk_size + 1024:
+        return False
+    else:
+        return True
+
+
+async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
+                        _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
+                        _log=False, _headers='random'):
+
     """
-    URL: Specify url.
+    This function is currently designed to run synchronously while also having asynchronous features.
+    Make use of async read/write and aiohhttp while also not needing to make this function entirely async -
+    (This function runs one instance at a time to prevent being kicked). """
 
-    FILENAME: Specify the PATH/FILENAME to save the download as.
-
-    TIMEOUT: Specify how long to wait during connection issues etc. before closing the connection. (Default 24h).
-
-    CHUNK SIZE: Specify size of each chunk to read/write from the stream. (Default 8192).
-
-    CLEAR CONSOLE LINE: Specify how many characters to clear from the console when displaying download progress.
-                        (Download progress on one line). (Default 50 characters for small displays).
-
-    CHUNK ENCODED RESPONSE: Bool. Must be true or false. (Default false)
-
-    MINIMUM FILE SIZE: Specify expected/acceptable minimum file size of downloaded file. (Remove junk). (Default 1024).
-
-    LOG: Record what has been downloaded successfully.
-    """
     global success_downloads, failed_downloads
+
+    _chunk_size = 8192
 
     # use a random user agent for download stability
     if _headers == 'random':
         _headers = {'User-Agent': str(user_agent())}
 
-    # connect
-    with requests.get(_url[1], stream=True, timeout=_timeout, headers=_headers) as r:
-        r.raise_for_status()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(_url[1]) as resp:
+            if resp.status == 200:
 
-        # open a temporary file of our created filename
-        with open(_filename+'.tmp', 'wb') as f:
+                async with aiofiles.open(_filename+'.tmp', mode='wb') as handle:
+                    async for chunk in resp.content.iter_chunked(_chunk_size):
 
-            # iterate though chunks of the stream
-            for chunk in r.iter_content(chunk_size=_chunk_size):
+                        # storage check:
+                        if await asyncio.to_thread(out_of_disk_space, _chunk_size) is False:
 
-                # allow (if _chunk_encoded_response is False) or (if _chunk_encoded_response is True and chunk)
-                _allow_continue = False
-                if _chunk_encoded_response is True:
-                    if chunk:
-                        _allow_continue = True
-                elif _chunk_encoded_response is False:
-                    _allow_continue = True
+                            # write chunk to the temporary file
+                            await handle.write(chunk)
 
-                if _allow_continue is True:
+                            # output: display download progress
+                            print(' ' * _clear_console_line_n, end='\r', flush=True)
+                            print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(_filename + ".tmp")))}', end='\r', flush=True)
+                        else:
+                            # output: out of disk space
+                            print(' ' * _clear_console_line_n, end='\r', flush=True)
+                            print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
 
-                    # storage check:
-                    total, used, free = shutil.disk_usage("./")
-                    if free > _chunk_size+1024:
+                            # delete temporary file if exists
+                            if os.path.exists(_filename + '.tmp'):
+                                await handle.close()
+                                await aiofiles.os.remove(_filename + '.tmp')
+                            # exit.
+                            print('\n\n')
+                            exit(0)
+                await handle.close()
 
-                        # write chunk to the temporary file
-                        f.write(chunk)
-
-                        # output: display download progress
-                        print(' ' * _clear_console_line_n, end='\r', flush=True)
-                        print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(_filename+".tmp")))}', end='\r', flush=True)
-
-                    else:
-                        # output: out of disk space
-                        print(' ' * _clear_console_line_n, end='\r', flush=True)
-                        print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
-
-                        # delete temporary file if exists
-                        if os.path.exists(_filename + '.tmp'):
-                            os.remove(_filename + '.tmp')
-                        time.sleep(1)
-
-                        # exit.
-                        print('')
-                        exit(0)
-
-    # check: does the temporary file exists
     if os.path.exists(_filename+'.tmp'):
 
         # check: temporary file worth keeping? (<1024 bytes would be less than 1024 characters, reduce this if needed)
@@ -210,11 +194,13 @@ def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
         if os.path.getsize(_filename+'.tmp') >= _min_file_size:
 
             # create final download file from temporary file
-            os.replace(_filename+'.tmp', _filename)
+            # os.replace(_filename+'.tmp', _filename)
+            await aiofiles.os.replace(_filename+'.tmp', _filename)
 
             # check: clean up the temporary file if it exists.
             if os.path.exists(_filename+'.tmp'):
-                os.remove(_filename+'.tmp')
+                # os.remove(_filename+'.tmp')
+                await aiofiles.os.remove(_filename + '.tmp')
 
             # display download success (does not guarantee a usable file, some checks are performed before this point)
             if os.path.exists(_filename):
@@ -226,24 +212,21 @@ def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
                     to_saved_list = _filename[idx_filename + 1:]
                     if to_saved_list not in success_downloads:
                         success_downloads.append(to_saved_list)
-                        if not os.path.exists('./books_saved.txt'):
-                            open('./books_saved.txt', 'w').close()
-                        with codecs.open('./books_saved.txt', 'a', encoding='utf8') as file_open:
-                            file_open.write(to_saved_list + '\n')
-                        file_open.close()
+                        async with aiofiles.open('./books_saved.txt' + '.tmp', mode='a+') as handle:
+                            await handle.write(to_saved_list + '\n')
+                        await handle.close()
 
                 return True
 
         else:
             print(f'{get_dt()} ' + color(f'[Download Failed] ', c='Y') + str('External link may be required to download this file.'))
 
+            # add books base url to failed only if file < 1024. (external link filter)
             if _url[0] not in failed_downloads:
                 failed_downloads.append(_url[0])
-                if not os.path.exists('./books_failed.txt'):
-                    open('./books_failed.txt', 'w').close()
-                with codecs.open('./books_failed.txt', 'a', encoding='utf8') as file_open:
-                    file_open.write(str(_url[0]) + '\n')
-                file_open.close()
+                async with aiofiles.open('./books_failed.txt' + '.tmp', mode='a+') as handle:
+                    await handle.write(str(_url[0]) + '\n')
+                await handle.close()
 
             # check: clean up the temporary file if it exists.
             if os.path.exists(_filename+'.tmp'):
@@ -425,9 +408,17 @@ async def main():
                         if enumerated_result[0] not in failed_downloads:
                             try:
                                 # Download file
-                                if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
-                                                 _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
-                                                 _log=True) is True:
+
+                                dl_tasks = []
+                                dl_task = asyncio.create_task(download_file(_url=enumerated_result, _filename=fname,
+                                                                            _timeout=86400, _chunk_size=8192,
+                                                                            _clear_console_line_n=50,
+                                                                            _chunk_encoded_response=False,
+                                                                            _min_file_size=1024, _log=True))
+                                dl_tasks.append(dl_task)
+                                dl = await asyncio.gather(*dl_tasks)
+
+                                if dl[0] is True:
 
                                     # Notification sound after platform check (Be compatible on Termux on Android)
                                     if os.name in ('nt', 'dos'):
