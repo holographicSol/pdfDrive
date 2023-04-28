@@ -18,7 +18,6 @@ import grand_library_supremo_help
 import sys
 
 # Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
-mute_default_player = True
 if os.name in ('nt', 'dos'):
     try:
         from PyQt5.QtCore import QUrl
