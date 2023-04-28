@@ -23,8 +23,12 @@ colorama.init()
 master_timeout = 86400.0  # 24h
 socket.setdefaulttimeout(master_timeout)
 
+
 # initialize fake user agant
-ua = UserAgent()
+def user_agent():
+    ua = UserAgent()
+    return ua.random
+
 
 i_page = 1
 _max_page = 88
@@ -145,7 +149,7 @@ def download_file(_url: str, _filename: str, _timeout=86400, _chunk_size=8192,
 
     # use a random user agent for download stability
     if _headers == 'random':
-        _headers = {'User-Agent': str(ua.random)}
+        _headers = {'User-Agent': str(user_agent())}
 
     # connect
     with requests.get(_url, stream=True, timeout=_timeout, headers=_headers) as r:
@@ -276,7 +280,7 @@ async def scrape_pages(url):
     """ scrape for book URLs """
     book_urls = []
     try:
-        headers = {'User-Agent': str(ua.random)}
+        headers = {'User-Agent': str(user_agent())}
         async with aiohttp.ClientSession(headers=headers, **client_args) as session:
             async with session.get(url) as resp:
                 body = await resp.text(encoding=None, errors='ignore')
@@ -297,9 +301,9 @@ async def scrape_pages(url):
 
 async def enumerate_links(url: str):
     """ scrape for book download links """
-    headers = {'User-Agent': str(ua.random)}
     book_urls = []
     try:
+        headers = {'User-Agent': str(user_agent())}
         async with aiohttp.ClientSession(headers=headers, **client_args) as session:
             async with session.get(url) as resp:
                 body = await resp.text(encoding=None, errors='ignore')
@@ -344,6 +348,7 @@ async def main():
             if result is None:
                 del result
         results[:] = [item for sublist in results for item in sublist if item is not None]
+        # Displays Zero if none found
         print(f'{get_dt()} ' + color('[Results] ', c='LC') + f'{len(results)}')
         print(f'{get_dt()} ' + color('[Phase One Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
