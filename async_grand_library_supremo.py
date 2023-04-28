@@ -38,6 +38,11 @@ exact_match = False
 lib_path = './library/'
 success_downloads = []
 failed_downloads = []
+external_downloads = []
+
+statuses = {x for x in range(100, 600)}
+statuses.remove(200)
+statuses.remove(429)
 
 my_timeout = aiohttp.ClientTimeout(
     total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
@@ -124,7 +129,7 @@ def make_file_name(book_url: str) -> str:
     return book_url
 
 
-def download_file(_url: str, _filename: str, _timeout=86400, _chunk_size=8192,
+def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
                   _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
                   _log=False, _headers='random') -> bool:
     """
@@ -145,14 +150,14 @@ def download_file(_url: str, _filename: str, _timeout=86400, _chunk_size=8192,
 
     LOG: Record what has been downloaded successfully.
     """
-    global success_downloads, failed_downloads
+    global success_downloads, failed_downloads, external_downloads
 
     # use a random user agent for download stability
     if _headers == 'random':
         _headers = {'User-Agent': str(user_agent())}
 
     # connect
-    with requests.get(_url, stream=True, timeout=_timeout, headers=_headers) as r:
+    with requests.get(_url[1], stream=True, timeout=_timeout, headers=_headers) as r:
         r.raise_for_status()
 
         # open a temporary file of our created filename
@@ -233,6 +238,14 @@ def download_file(_url: str, _filename: str, _timeout=86400, _chunk_size=8192,
         else:
             print(f'{get_dt()} ' + color(f'[Download Failed] File < {_min_file_size} bytes, will be removed.', c='Y'))
 
+            if _url[0] not in external_downloads:
+                external_downloads.append(_url[0])
+                if not os.path.exists('./books_external.txt'):
+                    open('./books_external.txt', 'w').close()
+                with codecs.open('./books_external.txt', 'a', encoding='utf8') as file_open:
+                    file_open.write(_url[0] + '\n')
+                file_open.close()
+
             # check: clean up the temporary file if it exists.
             if os.path.exists(_filename+'.tmp'):
                 os.remove(_filename+'.tmp')
@@ -296,6 +309,8 @@ async def scrape_pages(url):
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
+    # print(book_urls)
+
     return book_urls
 
 
@@ -312,6 +327,7 @@ async def enumerate_links(url: str):
                     data = await asyncio.to_thread(parse_soup_phase_two, soup)
                     # append together for list alignment later (when creating filenames for current download link)
                     book_urls.append([url, data])
+
     except asyncio.exceptions.TimeoutError:
         print(f'{get_dt()} ' + color('[TIMEOUT] ', c='Y') + f'Enumeration timeout. Retrying in {timeout_retry} seconds.')
         await asyncio.sleep(timeout_retry)
@@ -322,6 +338,8 @@ async def enumerate_links(url: str):
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
+    # print(book_urls)
+
     return book_urls
 
 
@@ -329,18 +347,22 @@ async def main():
     global success_downloads, failed_downloads
     global lib_path, _search_q, exact_match, i_page, _max_page
 
-    # create the first URL to scrape using query and exact match bool
-    url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+'))
-    if exact_match is True:
-        url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page='+str(i_page))
-    url = url + '&pagecount=&pubyear=&searchin=&page='
-
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
-    print(f'{get_dt()} ' + color('[Phase One] ', c='LC') + f'Gathering initial links...')
     for current_page in range(i_page, _max_page):
+
+        # create the first URL to scrape using query and exact match bool
+        url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+'))
+        if exact_match is True:
+            url = str('https://www.pdfdrive.com/search?q=' + str(_search_q).replace(' ', '+') + '&pagecount=&pubyear=&searchin=&em=1&page=' + str(i_page))
+        url = url + '&pagecount=&pubyear=&searchin=&page='
+        url = url+str(current_page)
+
+        print(f'{get_dt()} ' + color('[Scanning] ', c='LC') + f'Page: {current_page}')
+        print(f'{get_dt()} ' + color('[Page URL] ', c='LC') + f'{url}')
+        print(f'{get_dt()} ' + color('[Phase One] ', c='LC') + f'Gathering initial links...')
+
         tasks = []
         t0 = time.perf_counter()
-        url = url+str(current_page)
         task = asyncio.create_task(scrape_pages(url))
         tasks.append(task)
         results = await asyncio.gather(*tasks)
@@ -348,9 +370,15 @@ async def main():
             if result is None:
                 del result
         results[:] = [item for sublist in results for item in sublist if item is not None]
+
         # Displays Zero if none found
         print(f'{get_dt()} ' + color('[Results] ', c='LC') + f'{len(results)}')
         print(f'{get_dt()} ' + color('[Phase One Time] ', c='LC') + f'{time.perf_counter()-t0}')
+
+        if len(results) == int(0):
+            print(f'{get_dt()} ' + color('[Max Page] ', c='LC') + f'No results were found on page {current_page}. Exiting.')
+            print('\n\n')
+            exit(0)
 
         # Phase Two: Setup async scaper to get book download links for each book on the current page
         print(f'{get_dt()} ' + color('[Phase Two] ', c='LC') + f'Enumerating Links...')
@@ -364,8 +392,10 @@ async def main():
         print(f'{get_dt()} ' + color('[Enumerated Results] ', c='LC') + f'{len(enumerated_results)}')
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
-        # Synchronously (for now) attempt to download each book on the current page.
+        # Keep track of current page
         i_progress = 0
+
+        # Synchronously (for now) attempt to download each book on the current page.
         for enumerated_result in enumerated_results:
             print('_' * 28)
             print('')
@@ -392,7 +422,7 @@ async def main():
                     if fname not in success_downloads:
                         try:
                             # Download file
-                            if download_file(_url=enumerated_result[1], _filename=fname, _timeout=86400, _chunk_size=8192,
+                            if download_file(_url=enumerated_result, _filename=fname, _timeout=86400, _chunk_size=8192,
                                              _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
                                              _log=True) is True:
 
@@ -416,7 +446,7 @@ async def main():
                 else:
                     print(f'{get_dt()} ' + color('[Skipping] ', c='G') + color('File already exists in filesystem.', c='W'))
 
-                i_progress += 1
+            i_progress += 1
 
         grand_library_supremo.display_grand_library()
 
@@ -467,6 +497,15 @@ else:
 
     """ Use Download Log """
     if '--no-mem' not in stdin:
+        # saved downloads
+        if not os.path.exists('./books_saved.txt'):
+            open('./books_saved.txt', 'w').close()
+        with codecs.open('./books_saved.txt', 'r', encoding='utf8') as fo:
+            for line in fo:
+                line = line.strip()
+                if line not in success_downloads:
+                    success_downloads.append(line)
+        # failed downloads
         if not os.path.exists('./books_failed.txt'):
             open('./books_failed.txt', 'w').close()
         with codecs.open('./books_failed.txt', 'r', encoding='utf8') as fo:
@@ -475,13 +514,14 @@ else:
                 if line not in failed_downloads:
                     failed_downloads.append(line)
         fo.close()
-        if not os.path.exists('./books_saved.txt'):
-            open('./books_saved.txt', 'w').close()
-        with codecs.open('./books_saved.txt', 'r', encoding='utf8') as fo:
+        # external downloads
+        if not os.path.exists('./books_external.txt'):
+            open('./books_external.txt', 'w').close()
+        with codecs.open('./books_external.txt', 'r', encoding='utf8') as fo:
             for line in fo:
                 line = line.strip()
-                if line not in success_downloads:
-                    success_downloads.append(line)
+                if line not in external_downloads:
+                    external_downloads.append(line)
         fo.close()
 
     loop = asyncio.get_event_loop()
