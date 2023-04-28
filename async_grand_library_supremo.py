@@ -211,7 +211,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
                     to_saved_list = _filename[idx_filename + 1:]
                     if to_saved_list not in success_downloads:
                         success_downloads.append(to_saved_list)
-                        async with aiofiles.open('./books_saved.txt', mode='a+') as handle:
+                        async with aiofiles.open('./books_saved.txt', mode='a+', encoding='utf8') as handle:
                             await handle.write(to_saved_list + '\n')
                         await handle.close()
 
@@ -223,7 +223,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
             # add books base url to failed only if file < 1024. (external link filter)
             if _url[0] not in failed_downloads:
                 failed_downloads.append(_url[0])
-                async with aiofiles.open('./books_failed.txt', mode='a+') as handle:
+                async with aiofiles.open('./books_failed.txt', mode='a+', encoding='utf8') as handle:
                     await handle.write(str(_url[0]) + '\n')
                 await handle.close()
 
