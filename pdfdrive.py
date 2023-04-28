@@ -46,6 +46,7 @@ def user_agent():
 # create a dataclass for performance increase (instead of plugging everything into function arguments)
 @dataclass(slots=True)
 class DownloadArgs:
+    verbose: bool
     url: list
     filename: str
     filepath: str
@@ -153,11 +154,13 @@ async def download_file(dyn_download_args):
     This function is currently designed to run synchronously while also having asynchronous features.
     Make use of async read/write and aiohhttp while also not needing to make this function non-blocking -
     (This function runs one instance at a time to prevent being kicked). """
-    # global dl_arg
+
     _chunk_size = dyn_download_args.chunk_size
 
     async with aiohttp.ClientSession(headers=user_agent(), **client_args_download) as session:
         async with session.get(dyn_download_args.url[1]) as resp:
+            if dyn_download_args.verbose is True:
+                print(f'{get_dt()} ' + color('[Response] ', c='Y') + color(str(resp.status), c='LC'))
             if resp.status == 200:
 
                 # keep track of how many bytes have been downloaded
@@ -185,6 +188,7 @@ async def download_file(dyn_download_args):
                         else:
                             # output: out of disk space
                             print(' ' * dyn_download_args.clear_n_chars, end='\r', flush=True)
+                            #todo dt
                             print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
 
                             # delete temporary file if exists
@@ -203,31 +207,51 @@ async def download_file(dyn_download_args):
         # - if the file is in another place then a very small file may be downloaded because ultimately the file we
         #   wanted was not present and will then be detected and deleted.
         if os.path.getsize(dyn_download_args.filepath+'.tmp') >= dyn_download_args.min_file_size:
+            if dyn_download_args.verbose is True:
+                print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Attempting to replace {dyn_download_args.filepath}.tmp', c='LC'))
 
             # create final download file from temporary file
-            # os.replace(filepath+'.tmp', _filename)
             await aiofiles.os.replace(dyn_download_args.filepath+'.tmp', dyn_download_args.filepath)
+
+            if dyn_download_args.verbose is True:
+                print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Created {dyn_download_args.filepath}', c='LC'))
 
             # check: clean up the temporary file if it exists.
             if os.path.exists(dyn_download_args.filepath+'.tmp'):
-                # os.remove(filepath+'.tmp')
                 await aiofiles.os.remove(dyn_download_args.filepath + '.tmp')
 
             # display download success (does not guarantee a usable file, some checks are performed before this point)
             if os.path.exists(dyn_download_args.filepath):
+
+                if dyn_download_args.verbose is True:
+                    print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Replaced {dyn_download_args.filepath}.tmp successfully', c='LC'))
+
                 print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
 
                 # add book to saved list. multi-drive/system memory (continue where you left off on another disk/sys)
                 if dyn_download_args.log is True:
-                    # idx_filename = dyn_download_args.filepath.rfind('/')
-                    # to_saved_list = dyn_download_args.filepath[idx_filename + 1:]
                     if dyn_download_args.filename not in success_downloads:
                         success_downloads.append(dyn_download_args.filename)
                         async with aiofiles.open('./books_saved.txt', mode='a+', encoding='utf8') as handle:
                             await handle.write(dyn_download_args.filename + '\n')
                         await handle.close()
 
+                    # read file and check if new entry exists
+                    if dyn_download_args.verbose is True:
+                        async with aiofiles.open('./books_saved.txt', mode='r', encoding='utf8') as handle:
+                            text = await handle.read()
+                        await handle.close()
+                        lines = text.split('\n')
+                        if dyn_download_args.filename in lines:
+                            print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Successfully appended {dyn_download_args.filename} to books_saved.txt', c='LC'))
+                        else:
+                            print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Failed to append {dyn_download_args.filename} to books_saved.txt', c='LC'))
+
                 return True
+
+            else:
+                if dyn_download_args.verbose is True:
+                    print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Issue replacing {dyn_download_args.filepath}.tmp', c='LC'))
 
         else:
             print(f'{get_dt()} ' + color(f'[Download Failed] ', c='Y') + str('External link may be required to download this file.'))
@@ -235,14 +259,34 @@ async def download_file(dyn_download_args):
             # add books base url to failed only if file < 1024. (external link filter)
             if dyn_download_args.log is True:
                 if dyn_download_args.url[0] not in failed_downloads:
+                    if dyn_download_args.verbose is True:
+                        print(f'{get_dt()} ' + color('[Log] ', c='Y') + color(f'Logging {dyn_download_args.url[0]} as failed (possibly external link)', c='LC'))
                     failed_downloads.append(dyn_download_args.url[0])
                     async with aiofiles.open('./books_failed.txt', mode='a+', encoding='utf8') as handle:
                         await handle.write(str(dyn_download_args.url[0]) + '\n')
                     await handle.close()
 
+                # read file and check if new entry exists
+                if dyn_download_args.verbose is True:
+                    async with aiofiles.open('./books_failed.txt', mode='r', encoding='utf8') as handle:
+                        text = await handle.read()
+                    await handle.close()
+                    lines = text.split('\n')
+                    if dyn_download_args.url[0] in lines:
+                        print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Successfully appended {dyn_download_args.url[0]} to books_failed.txt', c='LC'))
+                    else:
+                        print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Failed to append {dyn_download_args.url[0]} to books_failed.txt', c='LC'))
+
             # check: clean up the temporary file if it exists.
             if os.path.exists(dyn_download_args.filename+'.tmp'):
                 os.remove(dyn_download_args.filename+'.tmp')
+
+            # check: path still exists
+            if dyn_download_args.verbose is True:
+                if not os.path.exists(dyn_download_args.filename+'.tmp'):
+                    print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Successfully removed {dyn_download_args.filepath}', c='LC'))
+                else:
+                    print(f'{get_dt()} ' + color('[File] ', c='Y') + color(f'Failed to remove {dyn_download_args.filepath}', c='LC'))
 
             return False
 
@@ -302,9 +346,6 @@ async def scrape_pages(url):
         print(f'{get_dt()} ' + color(f'[CONNECTION ERROR] Initial scraper connection error. Retrying in {connection_error_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
-
-    # print(book_urls)
-
     return book_urls
 
 
@@ -331,14 +372,11 @@ async def enumerate_links(url: str):
         print(f'{get_dt()} ' + color(f'[CONNECTION ERROR] Enumeration connection error. Retrying in {connection_error_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
-
-    # print(book_urls)
-
     return book_urls
 
 
 async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./library/', _success_downloads=None,
-               _failed_downloads=None, _ds_bytes=False):
+               _failed_downloads=None, _ds_bytes=False, _verbose=False):
 
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     if _success_downloads is None:
@@ -362,13 +400,17 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
         task = asyncio.create_task(scrape_pages(url))
         tasks.append(task)
         results = await asyncio.gather(*tasks)
+        if _verbose is True:
+            print(f'{get_dt()} ' + color('[Results] ', c='LC') + color(str(results), c='LC'))
         for result in results:
             if result is None:
                 del result
         results[:] = [item for sublist in results for item in sublist if item is not None]
+        if _verbose is True:
+            print(f'{get_dt()} ' + color('[Results Formatted] ', c='Y') + color(str(results), c='LC'))
 
         # Displays Zero if none found
-        print(f'{get_dt()} ' + color('[Results] ', c='LC') + f'{len(results)}')
+        print(f'{get_dt()} ' + color('[Results] ', c='Y') + f'{len(results)}')
         print(f'{get_dt()} ' + color('[Phase One Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
         if len(results) == int(0):
@@ -384,7 +426,11 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
             task = asyncio.create_task(enumerate_links(result))
             tasks.append(task)
         enumerated_results = await asyncio.gather(*tasks)
+        if _verbose is True:
+            print(f'{get_dt()} ' + color('[Enumerated Results] ', c='Y') + color(str(enumerated_results), c='LC'))
         enumerated_results[:] = [item for sublist in enumerated_results for item in sublist if item is not None]
+        if _verbose is True:
+            print(f'{get_dt()} ' + color('[Enumerated Results Formatted] ', c='Y') + color(str(enumerated_results), c='LC'))
         print(f'{get_dt()} ' + color('[Enumerated Results] ', c='LC') + f'{len(enumerated_results)}')
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
@@ -397,6 +443,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
             print('')
             print(f'{get_dt()} {color("[Progress] ", c="LC")} {color(str(f"{i_progress+1}/{len(enumerated_results)} ({current_page}/{_max_page})"), c="W")}')
             print(f'{get_dt()} ' + color('[Category] ', c='LC') + color(str(_search_q), c='W'))
+            if _verbose is True:
+                print(f'{get_dt()} ' + color('[Handling Enumerated Result] ', c='Y') + color(str(enumerated_result), c='LC'))
 
             if enumerated_result[0] is not None and enumerated_result[1] is not None:
 
@@ -422,7 +470,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
                         if enumerated_result[0] not in failed_downloads:
                             try:
                                 # Download file
-                                dyn_download_args = DownloadArgs(url=enumerated_result,
+                                dyn_download_args = DownloadArgs(verbose=_verbose,
+                                                                 url=enumerated_result,
                                                                  filename=filename,
                                                                  filepath=filepath,
                                                                  chunk_size=8192,
@@ -481,6 +530,10 @@ else:
     print('')
     print('[   PDF Drive Downloader   ]')
     print('')
+
+    verbose = False
+    if '-v' in stdin:
+        verbose = True
 
     if os.name in ('nt', 'dos'):
         if '-sfx' in stdin:
@@ -549,4 +602,4 @@ else:
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(_i_page=i_page, _max_page=max_page, _exact_match=exact_match, _search_q=search_q,
                                  _lib_path=lib_path, _success_downloads=success_downloads,
-                                 _failed_downloads=failed_downloads, _ds_bytes=ds_bytes))
+                                 _failed_downloads=failed_downloads, _ds_bytes=ds_bytes, _verbose=verbose))
