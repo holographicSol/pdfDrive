@@ -166,7 +166,7 @@ async def download_file(dyn_download_args):
                 # open file to write the bytes into
                 async with aiofiles.open(dyn_download_args.filepath+'.tmp', mode='wb') as handle:
 
-                    # iterate over chunks of bytes in the response stream
+                    # iterate over chunks of bytes in the response
                     async for chunk in resp.content.iter_chunked(_chunk_size):
 
                         # storage check:
@@ -294,12 +294,12 @@ async def scrape_pages(url):
                 soup = await asyncio.to_thread(get_soup, body)
                 book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
     except asyncio.exceptions.TimeoutError:
-        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='Y') + f'Initial scraper timeout. Retrying in {timeout_retry} seconds.')
+        print(f'{get_dt()} ' + color(f'[TIMEOUT] Initial scraper timeout. Retrying in {timeout_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await scrape_pages(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='Y') + f'Initial scraper connection error. Retrying in {connection_error_retry} seconds.')
+        print(f'{get_dt()} ' + color(f'[CONNECTION ERROR] Initial scraper connection error. Retrying in {connection_error_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
@@ -323,12 +323,12 @@ async def enumerate_links(url: str):
                     book_urls.append([url, data])
 
     except asyncio.exceptions.TimeoutError:
-        print(f'{get_dt()} ' + color('[TIMEOUT] ', c='Y') + f'Enumeration timeout. Retrying in {timeout_retry} seconds.')
+        print(f'{get_dt()} ' + color('[TIMEOUT] Enumeration timeout. Retrying in {timeout_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] ', c='Y') + f'Enumeration connection error. Retrying in {connection_error_retry} seconds.')
+        print(f'{get_dt()} ' + color('[CONNECTION ERROR] Enumeration connection error. Retrying in {connection_error_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
