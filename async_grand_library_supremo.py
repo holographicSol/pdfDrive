@@ -454,7 +454,10 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
 
             i_progress += 1
 
-        grand_library_supremo.display_grand_library()
+        print('')
+        print('')
+        print('[   PDF Drive Downloader   ]')
+        print('')
 
 
 # Get STDIN and parse
@@ -462,7 +465,10 @@ stdin = list(sys.argv)
 if '-h' in stdin:
     grand_library_supremo_help.display_help()
 else:
-    grand_library_supremo.display_grand_library()
+    print('')
+    print('')
+    print('[   PDF Drive Downloader   ]')
+    print('')
 
     if os.name in ('nt', 'dos'):
         if '-sfx' in stdin:
