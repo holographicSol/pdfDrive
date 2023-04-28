@@ -144,7 +144,7 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
 
     """
     This function is currently designed to run synchronously while also having asynchronous features.
-    Make use of async read/write and aiohhttp while also not needing to make this function entirely async -
+    Make use of async read/write and aiohhttp while also not needing to make this function non blocking -
     (This function runs one instance at a time to prevent being kicked). """
 
     global success_downloads, failed_downloads
