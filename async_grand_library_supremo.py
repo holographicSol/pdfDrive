@@ -1,21 +1,21 @@
 """ Written by Benjamin Jack Cullen """
 
 import os
-import asyncio
+import sys
 import time
+import shutil
+import datetime
+import colorama
+import codecs
+import asyncio
 import aiohttp
 import aiofiles
 import aiofiles.os
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-import datetime
-import colorama
-import socket
-import codecs
 import grand_library_supremo
-import shutil
 import grand_library_supremo_help
-import sys
+from dataclasses import dataclass
 
 # Platform check (Be compatible with Termux on Android, skip Pyqt5 import)
 if os.name in ('nt', 'dos'):
@@ -34,43 +34,47 @@ if os.name in ('nt', 'dos'):
     except:
         pass
 
-# colorama requires initialization before use
+# Colorama requires initialization before use
 colorama.init()
 
-# modify socket module timeout
-master_timeout = 86400.0  # 24h
-socket.setdefaulttimeout(master_timeout)
 
-
-# initialize fake user agant
+# return headers with a random user agent
 def user_agent():
     ua = UserAgent()
     return {'User-Agent': str(ua.random)}
 
 
-i_page = 1
-_max_page = 88
+# create a dataclass for performance increase (instead of plugging everything into function arguments)
+@dataclass(slots=True)
+class DownloadArgs:
+    url: list
+    filename: str
+    filepath: str
+    chunk_size: int
+    clear_n_chars: int
+    min_file_size: int
+    log: bool
+    success_downloads: list
+    failed_downloads: list
+
+
+# set master timeout
+master_timeout = 86400  # 24h
+
+# set scraper timeout/connection-issue retry time intervals
 timeout_retry = 2
 connection_error_retry = 10
-exact_match = False
-lib_path = './library/'
-success_downloads = []
-failed_downloads = []
-
-statuses = {x for x in range(100, 600)}
-statuses.remove(200)
-statuses.remove(429)
 
 scrape_timeout = aiohttp.ClientTimeout(
     total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
-    sock_connect=86400,  # How long to wait before an open socket allowed to connect
-    sock_read=86400 #  How long to wait with no data being read before timing out
+    sock_connect=master_timeout,  # How long to wait before an open socket allowed to connect
+    sock_read=master_timeout  # How long to wait with no data being read before timing out
 )
 
 download_timeout = aiohttp.ClientTimeout(
     total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
-    sock_connect=86400,  # How long to wait before an open socket allowed to connect
-    sock_read=86400 #  How long to wait with no data being read before timing out
+    sock_connect=master_timeout,  # How long to wait before an open socket allowed to connect
+    sock_read=master_timeout  # How long to wait with no data being read before timing out
 )
 
 client_args = dict(
@@ -119,11 +123,6 @@ def convert_bytes(num: int) -> str:
         num /= 1024.0
 
 
-def clear_console_line(char_limit: int):
-    """ clear n chars from console """
-    print(' '*char_limit, end='\r', flush=True)
-
-
 def play():
     """ notification sound """
     if os.name in ('nt', 'dos'):
@@ -131,16 +130,16 @@ def play():
         time.sleep(1)
 
 
-def make_file_name(book_url: str) -> str:
+def make_file_name(_book_url: str) -> str:
     """ create filenames from book URLs """
-    book_url = book_url.replace('https://www.pdfdrive.com//', '')
-    idx = book_url.rfind('-')
-    book_url = book_url[:idx]
-    book_url = book_url+'.pdf'
-    return book_url
+    book_url = _book_url.replace('https://www.pdfdrive.com//', '')
+    idx_book_url = book_url.rfind('-')
+    book_url = book_url[:idx_book_url]
+    book_name = book_url+'.pdf'
+    return book_name
 
 
-def out_of_disk_space(_chunk_size):
+def out_of_disk_space(_chunk_size: int) -> bool:
     total, used, free = shutil.disk_usage("./")
     if free > _chunk_size + 1024:
         return False
@@ -148,78 +147,70 @@ def out_of_disk_space(_chunk_size):
         return True
 
 
-async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
-                        _clear_console_line_n=50, _chunk_encoded_response=False, _min_file_size=1024,
-                        _log=False, _headers='random'):
+async def download_file(dyn_download_args):
 
     """
     This function is currently designed to run synchronously while also having asynchronous features.
     Make use of async read/write and aiohhttp while also not needing to make this function non-blocking -
     (This function runs one instance at a time to prevent being kicked). """
+    # global dl_arg
+    _chunk_size = dyn_download_args.chunk_size
 
-    global success_downloads, failed_downloads
-
-    _chunk_size = 8192
-
-    # use a random user agent for download stability
-    if _headers == 'random':
-        _headers = user_agent()
-
-    async with aiohttp.ClientSession(headers=_headers, **client_args_download) as session:
-        async with session.get(_url[1]) as resp:
+    async with aiohttp.ClientSession(headers=user_agent(), **client_args_download) as session:
+        async with session.get(dyn_download_args.url[1]) as resp:
             if resp.status == 200:
 
-                async with aiofiles.open(_filename+'.tmp', mode='wb') as handle:
+                async with aiofiles.open(dyn_download_args.filename+'.tmp', mode='wb') as handle:
                     async for chunk in resp.content.iter_chunked(_chunk_size):
 
                         # storage check:
-                        if await asyncio.to_thread(out_of_disk_space, _chunk_size) is False:
+                        if await asyncio.to_thread(out_of_disk_space, _chunk_size=dyn_download_args.chunk_size) is False:
 
                             # write chunk to the temporary file
                             await handle.write(chunk)
 
                             # output: display download progress
-                            print(' ' * _clear_console_line_n, end='\r', flush=True)
-                            print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(_filename + ".tmp")))}', end='\r', flush=True)
+                            print(' ' * dyn_download_args.clear_n_chars, end='\r', flush=True)
+                            print(f'[DOWNLOADING] {str(convert_bytes(os.path.getsize(dyn_download_args.filename + ".tmp")))}', end='\r', flush=True)
                         else:
                             # output: out of disk space
-                            print(' ' * _clear_console_line_n, end='\r', flush=True)
+                            print(' ' * dyn_download_args.clear_n_chars, end='\r', flush=True)
                             print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
 
                             # delete temporary file if exists
-                            if os.path.exists(_filename + '.tmp'):
+                            if os.path.exists(dyn_download_args.filename + '.tmp'):
                                 await handle.close()
-                                await aiofiles.os.remove(_filename + '.tmp')
+                                await aiofiles.os.remove(dyn_download_args.filename + '.tmp')
                             # exit.
                             print('\n\n')
                             exit(0)
                 await handle.close()
 
-    if os.path.exists(_filename+'.tmp'):
+    if os.path.exists(dyn_download_args.filename+'.tmp'):
 
         # check: temporary file worth keeping? (<1024 bytes would be less than 1024 characters, reduce this if needed)
         # - sometimes file exists on a different server, this software does not intentionally follow any external links,
         # - if the file is in another place then a very small file may be downloaded because ultimately the file we
         #   wanted was not present and will then be detected and deleted.
-        if os.path.getsize(_filename+'.tmp') >= _min_file_size:
+        if os.path.getsize(dyn_download_args.filename+'.tmp') >= dyn_download_args.min_file_size:
 
             # create final download file from temporary file
             # os.replace(_filename+'.tmp', _filename)
-            await aiofiles.os.replace(_filename+'.tmp', _filename)
+            await aiofiles.os.replace(dyn_download_args.filename+'.tmp', dyn_download_args.filename)
 
             # check: clean up the temporary file if it exists.
-            if os.path.exists(_filename+'.tmp'):
+            if os.path.exists(dyn_download_args.filename+'.tmp'):
                 # os.remove(_filename+'.tmp')
-                await aiofiles.os.remove(_filename + '.tmp')
+                await aiofiles.os.remove(dyn_download_args.filename + '.tmp')
 
             # display download success (does not guarantee a usable file, some checks are performed before this point)
-            if os.path.exists(_filename):
+            if os.path.exists(dyn_download_args.filename):
                 print(f'{get_dt()} ' + color('[Downloaded Successfully]', c='G'))
 
                 # add book to saved list. multi-drive/system memory (continue where you left off on another disk/sys)
-                if _log is True:
-                    idx_filename = _filename.rfind('/')
-                    to_saved_list = _filename[idx_filename + 1:]
+                if dyn_download_args.log is True:
+                    idx_filename = dyn_download_args.filename.rfind('/')
+                    to_saved_list = dyn_download_args.filename[idx_filename + 1:]
                     if to_saved_list not in success_downloads:
                         success_downloads.append(to_saved_list)
                         async with aiofiles.open('./books_saved.txt', mode='a+', encoding='utf8') as handle:
@@ -232,15 +223,16 @@ async def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=
             print(f'{get_dt()} ' + color(f'[Download Failed] ', c='Y') + str('External link may be required to download this file.'))
 
             # add books base url to failed only if file < 1024. (external link filter)
-            if _url[0] not in failed_downloads:
-                failed_downloads.append(_url[0])
-                async with aiofiles.open('./books_failed.txt', mode='a+', encoding='utf8') as handle:
-                    await handle.write(str(_url[0]) + '\n')
-                await handle.close()
+            if dyn_download_args.log is True:
+                if dyn_download_args.url[0] not in failed_downloads:
+                    failed_downloads.append(dyn_download_args.url[0])
+                    async with aiofiles.open('./books_failed.txt', mode='a+', encoding='utf8') as handle:
+                        await handle.write(str(dyn_download_args.url[0]) + '\n')
+                    await handle.close()
 
             # check: clean up the temporary file if it exists.
-            if os.path.exists(_filename+'.tmp'):
-                os.remove(_filename+'.tmp')
+            if os.path.exists(dyn_download_args.filename+'.tmp'):
+                os.remove(dyn_download_args.filename+'.tmp')
 
             return False
 
@@ -335,11 +327,13 @@ async def enumerate_links(url: str):
     return book_urls
 
 
-async def main():
-    global success_downloads, failed_downloads
-    global lib_path, _search_q, exact_match, i_page, _max_page
+async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./', _success_downloads=None,
+               _failed_downloads=None):
+    # global lib_path, _search_q, exact_match, i_page, _max_page
 
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
+    if _success_downloads is None:
+        _success_downloads = []
     for current_page in range(i_page, _max_page):
 
         # create URL to scrape using query and exact match bool
@@ -401,7 +395,7 @@ async def main():
                     os.makedirs(lib_path + '/' + _search_q, exist_ok=True)
 
                 # Make filename from URL
-                filename = make_file_name(book_url=enumerated_result[0])
+                filename = make_file_name(_book_url=enumerated_result[0])
                 fname = lib_path + '/' + _search_q + '/' + filename
 
                 # Output: Filename and download link
@@ -418,13 +412,18 @@ async def main():
                         if enumerated_result[0] not in failed_downloads:
                             try:
                                 # Download file
+                                dyn_download_args = DownloadArgs(url=enumerated_result,
+                                                                 filename=filename,
+                                                                 filepath=_lib_path,
+                                                                 chunk_size=8192,
+                                                                 clear_n_chars=50,
+                                                                 min_file_size=1024,
+                                                                 log=True,
+                                                                 success_downloads=_success_downloads,
+                                                                 failed_downloads=_failed_downloads)
 
                                 dl_tasks = []
-                                dl_task = asyncio.create_task(download_file(_url=enumerated_result, _filename=fname,
-                                                                            _timeout=86400, _chunk_size=8192,
-                                                                            _clear_console_line_n=50,
-                                                                            _chunk_encoded_response=False,
-                                                                            _min_file_size=1024, _log=True))
+                                dl_task = asyncio.create_task(download_file(dyn_download_args))
                                 dl_tasks.append(dl_task)
                                 dl = await asyncio.gather(*dl_tasks)
 
@@ -437,7 +436,6 @@ async def main():
                                             play_thread.start()
 
                             except Exception as e:
-
                                 # Output: any issues
                                 print(f'{get_dt()} [Exception.download] {e}')
                                 print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
@@ -489,22 +487,25 @@ else:
         i_page = int(stdin[idx])
 
     """ Query """
-    _search_q = ''
+    search_q = ''
     idx = stdin.index('-k')+1
     i = 0
     for x in stdin:
         if i >= int(idx):
-            _search_q = _search_q + ' ' + x
+            search_q = search_q + ' ' + x
         i += 1
-    _search_q = _search_q[1:]
-    print(f'{get_dt()} ' + color('[Search] ', c='LC') + color(_search_q, c='W'))
+    search_q = search_q[1:]
+    print(f'{get_dt()} ' + color('[Search] ', c='LC') + color(search_q, c='W'))
 
     """ Max Pages """
+    max_page = 88
     if '-max' in stdin:
         idx = stdin.index('-max') + 1
-        _max_page = int(stdin[idx])
+        max_page = int(stdin[idx])
 
     """ Use Download Log """
+    success_downloads = []
+    failed_downloads = []
     if '--no-mem' not in stdin:
         # saved downloads
         if not os.path.exists('./books_saved.txt'):
@@ -525,4 +526,6 @@ else:
         fo.close()
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    loop.run_until_complete(main(_i_page=i_page, _max_page=max_page, _exact_match=exact_match, _search_q=search_q,
+                                 _lib_path=lib_path, _success_downloads=success_downloads,
+                                 _failed_downloads=failed_downloads))
