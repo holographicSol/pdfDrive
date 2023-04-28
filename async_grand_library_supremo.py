@@ -436,7 +436,7 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
 
                             except Exception as e:
                                 # Output: any issues
-                                print(f'{get_dt()} [Exception.download] {e}')
+                                print(f'{get_dt()} ' + color(f'[Exception.download] {e}', c='R'))
                                 print(f'{get_dt()} ' + color('[Download Failed]', c='R'))
 
                                 # Remove the file if it was created to clean up after ourselves
