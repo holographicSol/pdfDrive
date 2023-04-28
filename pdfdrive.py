@@ -160,8 +160,13 @@ async def download_file(dyn_download_args):
         async with session.get(dyn_download_args.url[1]) as resp:
             if resp.status == 200:
 
+                # keep track of how many bytes have been downloaded
                 _sz = int(0)
+
+                # open file to write the bytes into
                 async with aiofiles.open(dyn_download_args.filepath+'.tmp', mode='wb') as handle:
+
+                    # iterate over chunks of bytes in the response stream
                     async for chunk in resp.content.iter_chunked(_chunk_size):
 
                         # storage check:
@@ -169,7 +174,6 @@ async def download_file(dyn_download_args):
 
                             # write chunk to the temporary file
                             await handle.write(chunk)
-
 
                             # output: display download progress
                             _sz += int(len(chunk))
