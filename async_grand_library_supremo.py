@@ -235,7 +235,7 @@ def download_file(_url: list, _filename: str, _timeout=86400, _chunk_size=8192,
                 return True
 
         else:
-            print(f'{get_dt()} ' + color(f'[Download Failed] File < {_min_file_size} bytes, will be removed.', c='Y'))
+            print(f'{get_dt()} ' + color(f'[Download Failed] Possibly an external link. File < {_min_file_size} bytes, will be removed.', c='Y'))
 
             if _url[0] not in failed_downloads:
                 failed_downloads.append(_url[0])
