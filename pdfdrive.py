@@ -323,12 +323,12 @@ async def enumerate_links(url: str):
                     book_urls.append([url, data])
 
     except asyncio.exceptions.TimeoutError:
-        print(f'{get_dt()} ' + color('[TIMEOUT] Enumeration timeout. Retrying in {timeout_retry} seconds.', c='Y'))
+        print(f'{get_dt()} ' + color(f'[TIMEOUT] Enumeration timeout. Retrying in {timeout_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
     except aiohttp.ClientConnectorError:
-        print(f'{get_dt()} ' + color('[CONNECTION ERROR] Enumeration connection error. Retrying in {connection_error_retry} seconds.', c='Y'))
+        print(f'{get_dt()} ' + color(f'[CONNECTION ERROR] Enumeration connection error. Retrying in {connection_error_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
         await enumerate_links(url)
 
