@@ -80,7 +80,7 @@ client_args = dict(
 
 client_args_download = dict(
     trust_env=True,
-    timeout_retry=download_timeout
+    timeout=download_timeout
 )
 
 
