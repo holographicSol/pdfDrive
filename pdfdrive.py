@@ -190,7 +190,6 @@ async def download_file(dyn_download_args: dataclasses.dataclass) -> bool:
                         else:
                             # output: out of disk space
                             print(' ' * dyn_download_args.clear_n_chars, end='\r', flush=True)
-                            #todo dt
                             print(str(color(s='[WARNING] OUT OF DISK SPACE! Download terminated.', c='Y')), end='\r', flush=True)
 
                             # delete temporary file if exists
