@@ -68,23 +68,23 @@ master_timeout = 86400  # 24h
 timeout_retry = 2
 connection_error_retry = 10
 
+# configure options for scraping
 scrape_timeout = aiohttp.ClientTimeout(
     total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
     sock_connect=master_timeout,  # How long to wait before an open socket allowed to connect
     sock_read=master_timeout  # How long to wait with no data being read before timing out
 )
-
-download_timeout = aiohttp.ClientTimeout(
-    total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
-    sock_connect=master_timeout,  # How long to wait before an open socket allowed to connect
-    sock_read=master_timeout  # How long to wait with no data being read before timing out
-)
-
 client_args = dict(
     trust_env=True,
     timeout=scrape_timeout
 )
 
+# configure options for downloading files
+download_timeout = aiohttp.ClientTimeout(
+    total=None,  # default value is 5 minutes, set to `None` for unlimited timeout
+    sock_connect=master_timeout,  # How long to wait before an open socket allowed to connect
+    sock_read=master_timeout  # How long to wait with no data being read before timing out
+)
 client_args_download = dict(
     trust_env=True,
     timeout=download_timeout
