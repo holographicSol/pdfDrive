@@ -401,7 +401,7 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
         tasks.append(task)
         results = await asyncio.gather(*tasks)
         if _verbose is True:
-            print(f'{get_dt()} ' + color('[Results] ', c='LC') + color(str(results), c='LC'))
+            print(f'{get_dt()} ' + color('[Results] ', c='Y') + color(str(results), c='LC'))
         for result in results:
             if result is None:
                 del result
