@@ -297,20 +297,29 @@ def get_soup(_body: str) -> bs4.BeautifulSoup:
     return BeautifulSoup(_body, 'html.parser')
 
 
-def pass_domain_check(_book_urls: list) -> bool:
+def pass_domain_check(_book_urls: list, _level: int) -> bool:
     pass_bool = True
     for book_url in _book_urls:
-        if not str(book_url).startswith('https://www.pdfdrive.com/'):
-            pass_bool = False
-            break
+        if _level is int(1):
+            if not str(book_url).startswith('https://www.pdfdrive.com/'):
+                pass_bool = False
+                break
+        elif _level is int(2):
+            if not str(book_url[0]).startswith('https://www.pdfdrive.com/') or not str(book_url[1]).startswith('https://www.pdfdrive.com/'):
+                pass_bool = False
+                break
     return pass_bool
 
 
-def remove_unacceptable_domains(_book_urls: list) -> list:
+def remove_unacceptable_domains(_book_urls: list, _level: int) -> list:
     new_list = []
     for book_url in _book_urls:
-        if str(book_url).startswith('https://www.pdfdrive.com/'):
-            new_list.append(book_url)
+        if _level is int(1):
+            if str(book_url).startswith('https://www.pdfdrive.com/'):
+                new_list.append(book_url)
+        elif _level is int(2):
+            if str(book_url[0]).startswith('https://www.pdfdrive.com/') and str(book_url[1]).startswith('https://www.pdfdrive.com/'):
+                new_list.append(book_url)
     return new_list
 
 
@@ -431,12 +440,12 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
         # Domain checks: Domain should always be pdfdrive.com because of the way URLs are generated, however, make sure
         # quickly in case code is changed later in the parsers.
         if _allow_external is False:
-            if pass_domain_check(_book_urls=list(results)) is False:
+            if pass_domain_check(_book_urls=list(results), _level=int(1)) is False:
                 print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Domain checks failed. One or more URLs not not match the accepted domain name.', c='R'))
-                results = remove_unacceptable_domains(_book_urls=list(results))
+                results = remove_unacceptable_domains(_book_urls=list(results), _level=int(1))
                 print(f'{get_dt()} ' + color('[Domain Check] ', c='Y') + color('Attempting to remove external links.', c='Y'))
                 print(f'{get_dt()} ' + color('[Results] ', c='Y') + color(str(results), c='LC'))
-            if pass_domain_check(_book_urls=list(results)) is True:
+            if pass_domain_check(_book_urls=list(results), _level=int(1)) is True:
                 print(f'{get_dt()} ' + color('[Domain Check] ', c='Y') + color('Domain checks passed.', c='G'))
             else:
                 print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Problem removing external links.', c='R'))
@@ -467,6 +476,21 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
             print(f'{get_dt()} ' + color('[Enumerated Results Formatted] ', c='Y') + color(str(enumerated_results), c='LC'))
         print(f'{get_dt()} ' + color('[Enumerated Results] ', c='LC') + f'{len(enumerated_results)}')
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
+
+        # Domain checks: Domain should always be pdfdrive.com because of the way URLs are generated, however, make sure
+        # quickly in case code is changed later in the parsers.
+        if _allow_external is False:
+            if pass_domain_check(_book_urls=list(enumerated_results), _level=2) is False:
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Domain checks failed. One or more URLs not not match the accepted domain name.', c='R'))
+                enumerated_results = remove_unacceptable_domains(_book_urls=list(enumerated_results), _level=2)
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='Y') + color('Attempting to remove external links.', c='Y'))
+                print(f'{get_dt()} ' + color('[Enumerated Results] ', c='Y') + color(str(enumerated_results), c='LC'))
+            if pass_domain_check(_book_urls=list(enumerated_results), _level=2) is True:
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='Y') + color('Domain checks passed.', c='G'))
+            else:
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Problem removing external links.', c='R'))
+                print('')
+                break
 
         # Keep track of current page
         i_progress = 0
