@@ -438,7 +438,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
             print(f'{get_dt()} ' + color('[Results Formatted] ', c='Y') + color(str(results), c='LC'))
 
         # Domain checks: Domain should always be pdfdrive.com because of the way URLs are generated, however, make sure
-        # quickly in case code is changed later in the parsers.
+        # quickly in case code is changed later in the parsers and also because then we can turn follow external links
+        # on/off later if we like to optionally increase download yield.
         if _allow_external is False:
             if pass_domain_check(_book_urls=list(results), _level=int(1)) is False:
                 print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Domain checks failed. One or more URLs not not match the accepted domain name.', c='R'))
@@ -478,7 +479,8 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
         print(f'{get_dt()} ' + color('[Phase Two Time] ', c='LC') + f'{time.perf_counter()-t0}')
 
         # Domain checks: Domain should always be pdfdrive.com because of the way URLs are generated, however, make sure
-        # quickly in case code is changed later in the parsers.
+        # quickly in case code is changed later in the parsers and also because then we can turn follow external links
+        # on/off later if we like to optionally increase download yield.
         if _allow_external is False:
             if pass_domain_check(_book_urls=list(enumerated_results), _level=2) is False:
                 print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Domain checks failed. One or more URLs not not match the accepted domain name.', c='R'))
