@@ -1,10 +1,12 @@
 """ Written by Benjamin Jack Cullen """
-
+import dataclasses
 import os
 import sys
 import time
 import shutil
 import datetime
+
+import bs4
 import colorama
 import codecs
 import asyncio
@@ -148,7 +150,7 @@ def out_of_disk_space(_chunk_size: int) -> bool:
         return True
 
 
-async def download_file(dyn_download_args):
+async def download_file(dyn_download_args: dataclasses.dataclass) -> bool:
 
     """
     This function is currently designed to run synchronously while also having asynchronous features.
@@ -291,15 +293,15 @@ async def download_file(dyn_download_args):
             return False
 
 
-def get_soup(body):
+def get_soup(_body: str) -> bs4.BeautifulSoup:
     """ return soup """
-    return BeautifulSoup(body, 'html.parser')
+    return BeautifulSoup(_body, 'html.parser')
 
 
-def parse_soup_phase_one(soup):
+def parse_soup_phase_one(_soup: bs4.BeautifulSoup) -> list:
     """ parse soup from phase one (parse for book URLs) """
     book_urls = []
-    for link in soup.find_all('a'):
+    for link in _soup.find_all('a'):
         href = (link.get('href'))
         if str(href).endswith('.html'):
             if 'auth/login' not in str(href):
@@ -310,10 +312,10 @@ def parse_soup_phase_one(soup):
     return book_urls
 
 
-def parse_soup_phase_two(soup):
+def parse_soup_phase_two(_soup: bs4.BeautifulSoup) -> str:
     """ parse soup from phase two (parse book URLs (found in phase one) for a specific tag) """
     data_preview = ''
-    for link in soup.find_all('button'):
+    for link in _soup.find_all('button'):
         data_preview = link.get('data-preview')
         if data_preview is not None:
             data_preview = data_preview
@@ -327,16 +329,16 @@ def parse_soup_phase_two(soup):
         return f'https://www.pdfdrive.com//download.pdf?id={data_id}&h={h_id}&u=cache&ext=pdf'
 
 
-async def scrape_pages(url):
+async def scrape_pages(url: str) -> list:
     """ scrape for book URLs """
     book_urls = []
     try:
         _headers = user_agent()
         async with aiohttp.ClientSession(headers=_headers, **client_args) as session:
             async with session.get(url) as resp:
-                body = await resp.text(encoding=None, errors='ignore')
-                soup = await asyncio.to_thread(get_soup, body)
-                book_urls = await asyncio.to_thread(parse_soup_phase_one, soup)
+                _body = await resp.text(encoding=None, errors='ignore')
+                _soup = await asyncio.to_thread(get_soup, _body=_body)
+                book_urls = await asyncio.to_thread(parse_soup_phase_one, _soup=_soup)
     except asyncio.exceptions.TimeoutError:
         print(f'{get_dt()} ' + color(f'[TIMEOUT] Initial scraper timeout. Retrying in {timeout_retry} seconds.', c='Y'))
         await asyncio.sleep(timeout_retry)
@@ -349,17 +351,17 @@ async def scrape_pages(url):
     return book_urls
 
 
-async def enumerate_links(url: str):
+async def enumerate_links(url: str) -> list:
     """ scrape for book download links """
     book_urls = []
     try:
         _headers = user_agent()
         async with aiohttp.ClientSession(headers=_headers, **client_args) as session:
             async with session.get(url) as resp:
-                body = await resp.text(encoding=None, errors='ignore')
-                soup = await asyncio.to_thread(get_soup, body)
-                if soup:
-                    data = await asyncio.to_thread(parse_soup_phase_two, soup)
+                _body = await resp.text(encoding=None, errors='ignore')
+                _soup = await asyncio.to_thread(get_soup, _body=_body)
+                if _soup:
+                    data = await asyncio.to_thread(parse_soup_phase_two, _soup=_soup)
                     # append together for list alignment later (when creating filenames for current download link)
                     book_urls.append([url, data])
 
@@ -375,8 +377,8 @@ async def enumerate_links(url: str):
     return book_urls
 
 
-async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./library/', _success_downloads=None,
-               _failed_downloads=None, _ds_bytes=False, _verbose=False):
+async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./library/',
+               _success_downloads=None, _failed_downloads=None, _ds_bytes=False, _verbose=False):
 
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     if _success_downloads is None:
