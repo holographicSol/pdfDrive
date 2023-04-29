@@ -297,6 +297,23 @@ def get_soup(_body: str) -> bs4.BeautifulSoup:
     return BeautifulSoup(_body, 'html.parser')
 
 
+def pass_domain_check(_book_urls: list) -> bool:
+    pass_bool = True
+    for book_url in _book_urls:
+        if not str(book_url).startswith('https://www.pdfdrive.com/'):
+            pass_bool = False
+            break
+    return pass_bool
+
+
+def remove_unacceptable_domains(_book_urls: list) -> list:
+    new_list = []
+    for book_url in _book_urls:
+        if str(book_url).startswith('https://www.pdfdrive.com/'):
+            new_list.append(book_url)
+    return new_list
+
+
 def parse_soup_phase_one(_soup: bs4.BeautifulSoup) -> list:
     """ parse soup from phase one (parse for book URLs) """
     book_urls = []
@@ -377,7 +394,8 @@ async def enumerate_links(url: str) -> list:
 
 
 async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_path='./library/',
-               _success_downloads=None, _failed_downloads=None, _ds_bytes=False, _verbose=False):
+               _success_downloads=None, _failed_downloads=None, _ds_bytes=False, _verbose=False,
+               _allow_external=False):
 
     # Phase One: Setup async scaper to get book URLs (one page at a time to prevent getting kicked from the server)
     if _success_downloads is None:
@@ -409,6 +427,21 @@ async def main(_i_page=1, _max_page=88, _exact_match=False, _search_q='', _lib_p
         results[:] = [item for sublist in results for item in sublist if item is not None]
         if _verbose is True:
             print(f'{get_dt()} ' + color('[Results Formatted] ', c='Y') + color(str(results), c='LC'))
+
+        # Domain checks: Domain should always be pdfdrive.com because of the way URLs are generated, however, make sure
+        # quickly in case code is changed later in the parsers.
+        if _allow_external is False:
+            if pass_domain_check(_book_urls=list(results)) is False:
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Domain checks failed. One or more URLs not not match the accepted domain name.', c='R'))
+                results = remove_unacceptable_domains(_book_urls=list(results))
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='Y') + color('Attempting to remove external links.', c='Y'))
+                print(f'{get_dt()} ' + color('[Results] ', c='Y') + color(str(results), c='LC'))
+            if pass_domain_check(_book_urls=list(results)) is True:
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='Y') + color('Domain checks passed.', c='G'))
+            else:
+                print(f'{get_dt()} ' + color('[Domain Check] ', c='R') + color('Problem removing external links.', c='R'))
+                print('')
+                break
 
         # Displays Zero if none found
         print(f'{get_dt()} ' + color('[Results] ', c='Y') + f'{len(results)}')
@@ -600,7 +633,11 @@ else:
                     failed_downloads.append(line)
         fo.close()
 
+    """ Allow external links to be followed """
+    allow_external = False
+
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(_i_page=i_page, _max_page=max_page, _exact_match=exact_match, _search_q=search_q,
                                  _lib_path=lib_path, _success_downloads=success_downloads,
-                                 _failed_downloads=failed_downloads, _ds_bytes=ds_bytes, _verbose=verbose))
+                                 _failed_downloads=failed_downloads, _ds_bytes=ds_bytes, _verbose=verbose,
+                                 _allow_external=allow_external))
