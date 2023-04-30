@@ -1,5 +1,4 @@
 pip install bs4
-pip install pyqt5
 pip install asyncio
 pip install aiohttp
 pip install aiofiles
