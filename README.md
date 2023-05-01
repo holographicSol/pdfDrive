@@ -1,3 +1,5 @@
+The target website may have just been updated to block this kind of thing. This software may be temporarily or permenantly deprecated.
+
 Grand Library Supremo (PDF Drive Downloader):
 
     [   PDF Drive Downloader   ]
