@@ -1,4 +1,13 @@
-The target website may have just been updated to block this kind of thing. This software may be temporarily or permenantly deprecated.
+This software may be temporarily or permenantly deprecated:
+
+The target website may have just been updated to block this kind of thing. Upon inspection it appears
+PDFDrive is now trying to force users to enable notifications in the browser before being able to
+download, then once you have enabled notifications you will be spammed with crapware trying to 
+get you to install crapware. Do not enable notiications for PDFDrive, its a scam.
+
+I will see what I can do to plug this program into an alternative website. Until then this program
+may be out of service.
+    
 
 Grand Library Supremo (PDF Drive Downloader):
 
