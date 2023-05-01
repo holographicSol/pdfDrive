@@ -5,8 +5,7 @@ PDFDrive is now trying to force users to enable notifications in the browser bef
 download, then once you have enabled notifications you will be spammed with crapware trying to 
 get you to install crapware. Do not enable notiications for PDFDrive, its a scam.
 
-I will see what I can do to plug this program into an alternative website. Until then this program
-may be out of service.
+You may use my new library genesis downloader: https://github.com/holographicSol/libGenv2
     
 
 Grand Library Supremo (PDF Drive Downloader):
